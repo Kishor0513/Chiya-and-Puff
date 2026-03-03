@@ -2,10 +2,9 @@
 
 import { ToastContainer, useToast } from '@/components/Toast';
 import type { Table } from '@/types';
-import { AlertCircle, Copy, PlusCircle, QrCode, X } from 'lucide-react';
-import Link from 'next/link';
+import { Copy, PlusCircle, Trash2, X } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const STATUS_CONFIG = {
 	AVAILABLE: { label: 'Available', color: '#00A699' },
@@ -13,31 +12,25 @@ const STATUS_CONFIG = {
 	NEEDS_SERVICE: { label: 'Needs Service', color: '#FF5A5F' },
 } as const;
 
-export default function WaiterDashboard() {
+export default function AdminTablesPage() {
 	const [tables, setTables] = useState<Table[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [showAddModal, setShowAddModal] = useState(false);
 	const [showQrModal, setShowQrModal] = useState<Table | null>(null);
 	const [newTableNumber, setNewTableNumber] = useState('');
 	const [creating, setCreating] = useState(false);
+	const [deleting, setDeleting] = useState<string | null>(null);
 	const { toasts, toast, dismiss } = useToast();
 
-	const fetchTables = useCallback(async () => {
-		try {
-			const res = await fetch('/api/tables');
-			if (res.ok) setTables(await res.json());
-		} catch {
-			// silent poll fail
-		} finally {
-			setLoading(false);
-		}
-	}, []);
+	const appUrl = typeof window !== 'undefined' ? window.location.origin : '';
 
 	useEffect(() => {
-		fetchTables();
-		const interval = setInterval(fetchTables, 10_000);
-		return () => clearInterval(interval);
-	}, [fetchTables]);
+		fetch('/api/tables')
+			.then((r) => r.json())
+			.then(setTables)
+			.catch(() => toast('Failed to load tables', 'error'))
+			.finally(() => setLoading(false));
+	}, []);
 
 	const handleAddTable = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -52,7 +45,7 @@ export default function WaiterDashboard() {
 			if (res.ok) {
 				const t: Table = await res.json();
 				setTables((prev) => [...prev, t]);
-				toast(`Table ${t.tableNumber} added successfully!`, 'success');
+				toast(`Table ${t.tableNumber} created!`, 'success');
 				setShowAddModal(false);
 				setNewTableNumber('');
 			} else {
@@ -66,17 +59,44 @@ export default function WaiterDashboard() {
 		}
 	};
 
-	const copyLink = (table: Table) => {
-		const url = `${window.location.origin}/table/${table.id}?token=${table.qrData}`;
-		navigator.clipboard
-			.writeText(url)
-			.then(() => toast('Link copied!', 'success'));
+	const handleDelete = async (table: Table) => {
+		if (table.orders && table.orders.length > 0) {
+			toast('Cannot delete a table with active orders', 'error');
+			return;
+		}
+		setDeleting(table.id);
+		try {
+			const res = await fetch(`/api/tables/${table.id}`, { method: 'DELETE' });
+			if (res.ok) {
+				setTables((prev) => prev.filter((t) => t.id !== table.id));
+				toast(`Table ${table.tableNumber} deleted`, 'success');
+			} else {
+				const err = await res.json();
+				toast(err.error || 'Failed to delete', 'error');
+			}
+		} catch {
+			toast('Network error', 'error');
+		} finally {
+			setDeleting(null);
+		}
 	};
 
-	const appUrl =
-		typeof window !== 'undefined'
-			? window.location.origin
-			: process.env.NEXT_PUBLIC_APP_URL || '';
+	const copyLink = (table: Table) => {
+		navigator.clipboard
+			.writeText(`${appUrl}/table/${table.id}?token=${table.qrData}`)
+			.then(() => toast('Order link copied!', 'success'));
+	};
+
+	const inputStyle: React.CSSProperties = {
+		width: '100%',
+		padding: '0.65rem 0.9rem',
+		background: 'var(--glass)',
+		border: '1px solid var(--glass-border)',
+		borderRadius: '8px',
+		color: 'var(--text-primary)',
+		fontSize: '0.9rem',
+		boxSizing: 'border-box',
+	};
 
 	return (
 		<div>
@@ -94,16 +114,28 @@ export default function WaiterDashboard() {
 					marginBottom: '2rem',
 				}}
 			>
-				<h1
-					style={{
-						fontSize: '1.75rem',
-						fontWeight: 700,
-						color: 'var(--text-primary)',
-						margin: 0,
-					}}
-				>
-					Table Floor Plan
-				</h1>
+				<div>
+					<h1
+						style={{
+							fontSize: '1.75rem',
+							fontWeight: 700,
+							color: 'var(--text-primary)',
+							margin: 0,
+						}}
+					>
+						Tables &amp; QR Codes
+					</h1>
+					<p
+						style={{
+							color: 'var(--text-secondary)',
+							margin: '0.4rem 0 0',
+							fontSize: '0.875rem',
+						}}
+					>
+						Manage tables. Print or share the QR code for each table so
+						customers can order.
+					</p>
+				</div>
 				<button
 					onClick={() => setShowAddModal(true)}
 					style={{
@@ -125,80 +157,79 @@ export default function WaiterDashboard() {
 				</button>
 			</div>
 
-			{/* Status Legend */}
+			{/* How it works banner */}
 			<div
+				className="glass-panel"
 				style={{
-					display: 'flex',
-					gap: '1.25rem',
+					padding: '1rem 1.5rem',
 					marginBottom: '1.5rem',
-					flexWrap: 'wrap',
+					borderLeft: '4px solid var(--primary)',
+					display: 'flex',
+					alignItems: 'flex-start',
+					gap: '0.75rem',
 				}}
 			>
-				{Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
-					<div
-						key={key}
-						style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
-					>
-						<span
-							style={{
-								width: 10,
-								height: 10,
-								borderRadius: '50%',
-								background: cfg.color,
-								display: 'inline-block',
-							}}
-						/>
-						<span
-							style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}
-						>
-							{cfg.label}
-						</span>
-					</div>
-				))}
+				<div style={{ fontSize: '1.25rem' }}>ℹ️</div>
+				<div
+					style={{
+						fontSize: '0.875rem',
+						color: 'var(--text-secondary)',
+						lineHeight: 1.6,
+					}}
+				>
+					<strong style={{ color: 'var(--text-primary)' }}>
+						How ordering works:
+					</strong>{' '}
+					Place the printed QR code on each physical table. Customers scan it
+					with their phone camera → opens the menu → they browse and place their
+					order. The waiter dashboard auto-refreshes every 10 seconds and shows
+					new orders with{' '}
+					<strong style={{ color: '#FF5A5F' }}>Needs Service</strong> status
+					when a customer calls for assistance.
+				</div>
 			</div>
 
-			{/* Table Grid */}
+			{/* Table list */}
 			{loading ? (
 				<div
 					style={{
 						display: 'grid',
-						gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))',
+						gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
 						gap: '1rem',
 					}}
 				>
-					{Array.from({ length: 6 }).map((_, i) => (
+					{Array.from({ length: 4 }).map((_, i) => (
 						<div
 							key={i}
 							className="glass-panel"
-							style={{ padding: '1.5rem', height: '160px', opacity: 0.5 }}
+							style={{ height: '140px', opacity: 0.4 }}
 						/>
 					))}
 				</div>
 			) : tables.length === 0 ? (
 				<div
 					className="glass-panel"
-					style={{ padding: '3rem', textAlign: 'center' }}
+					style={{
+						padding: '3rem',
+						textAlign: 'center',
+						color: 'var(--text-secondary)',
+					}}
 				>
-					<AlertCircle
-						size={40}
-						color="var(--text-secondary)"
-						style={{ margin: '0 auto 1rem' }}
-					/>
-					<p style={{ color: 'var(--text-secondary)', margin: 0 }}>
-						No tables yet. Add your first table above.
-					</p>
+					No tables yet. Click <strong>Add Table</strong> to create your first
+					one.
 				</div>
 			) : (
 				<div
 					style={{
 						display: 'grid',
-						gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))',
+						gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
 						gap: '1rem',
 					}}
 				>
 					{tables.map((table) => {
 						const cfg =
 							STATUS_CONFIG[table.status as keyof typeof STATUS_CONFIG];
+						const activeOrders = table.orders?.length ?? 0;
 						return (
 							<div
 								key={table.id}
@@ -206,21 +237,30 @@ export default function WaiterDashboard() {
 								style={{
 									padding: '1.25rem',
 									borderTop: `3px solid ${cfg.color}`,
-									display: 'flex',
-									flexDirection: 'column',
-									gap: '0.75rem',
 								}}
 							>
 								<div
 									style={{
 										display: 'flex',
 										justifyContent: 'space-between',
-										alignItems: 'center',
+										alignItems: 'flex-start',
+										marginBottom: '0.75rem',
 									}}
 								>
-									<span style={{ fontWeight: 700, fontSize: '1.1rem' }}>
-										Table {table.tableNumber}
-									</span>
+									<div>
+										<div style={{ fontWeight: 700, fontSize: '1.1rem' }}>
+											Table {table.tableNumber}
+										</div>
+										<div
+											style={{
+												fontSize: '0.78rem',
+												color: 'var(--text-secondary)',
+												marginTop: '0.2rem',
+											}}
+										>
+											{activeOrders} active order{activeOrders !== 1 ? 's' : ''}
+										</div>
+									</div>
 									<span
 										style={{
 											background: cfg.color + '20',
@@ -238,22 +278,22 @@ export default function WaiterDashboard() {
 								<div
 									style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}
 								>
-									<Link
-										href={`/waiter/table/${table.id}`}
+									<button
+										onClick={() => setShowQrModal(table)}
 										style={{
 											flex: 1,
-											textAlign: 'center',
 											background: 'var(--primary)',
 											color: '#fff',
+											border: 'none',
 											borderRadius: '8px',
 											padding: '0.45rem',
-											fontSize: '0.8rem',
+											cursor: 'pointer',
 											fontWeight: 600,
-											textDecoration: 'none',
+											fontSize: '0.8rem',
 										}}
 									>
-										Manage
-									</Link>
+										Show QR
+									</button>
 									<button
 										onClick={() => copyLink(table)}
 										title="Copy order link"
@@ -269,18 +309,27 @@ export default function WaiterDashboard() {
 										<Copy size={14} />
 									</button>
 									<button
-										onClick={() => setShowQrModal(table)}
-										title="Show QR code"
+										onClick={() => handleDelete(table)}
+										disabled={deleting === table.id || activeOrders > 0}
+										title={
+											activeOrders > 0 ? 'Has active orders' : 'Delete table'
+										}
 										style={{
-											background: 'var(--glass)',
-											border: '1px solid var(--glass-border)',
+											background:
+												activeOrders > 0 ? 'var(--glass)' : '#FF5A5F20',
+											border: `1px solid ${activeOrders > 0 ? 'var(--glass-border)' : '#FF5A5F40'}`,
 											borderRadius: '8px',
 											padding: '0.45rem 0.6rem',
-											cursor: 'pointer',
-											color: 'var(--text-secondary)',
+											cursor:
+												activeOrders > 0 || deleting === table.id
+													? 'not-allowed'
+													: 'pointer',
+											color:
+												activeOrders > 0 ? 'var(--text-secondary)' : '#FF5A5F',
+											opacity: deleting === table.id ? 0.5 : 1,
 										}}
 									>
-										<QrCode size={14} />
+										<Trash2 size={14} />
 									</button>
 								</div>
 							</div>
@@ -308,7 +357,7 @@ export default function WaiterDashboard() {
 						style={{
 							padding: '2rem',
 							width: '100%',
-							maxWidth: '400px',
+							maxWidth: '380px',
 							position: 'relative',
 						}}
 						onClick={(e) => e.stopPropagation()}
@@ -330,7 +379,7 @@ export default function WaiterDashboard() {
 						<h2
 							style={{
 								margin: '0 0 1.5rem',
-								fontSize: '1.25rem',
+								fontSize: '1.2rem',
 								fontWeight: 700,
 							}}
 						>
@@ -355,20 +404,11 @@ export default function WaiterDashboard() {
 									type="number"
 									min="1"
 									value={newTableNumber}
-									onChange={(e) => setNewTableNumber(e.target.value)}
-									placeholder="e.g. 7"
 									required
 									autoFocus
-									style={{
-										width: '100%',
-										padding: '0.65rem 0.9rem',
-										background: 'var(--glass)',
-										border: '1px solid var(--glass-border)',
-										borderRadius: '8px',
-										color: 'var(--text-primary)',
-										fontSize: '0.9rem',
-										boxSizing: 'border-box',
-									}}
+									onChange={(e) => setNewTableNumber(e.target.value)}
+									placeholder="e.g. 5"
+									style={inputStyle}
 								/>
 							</div>
 							<button
@@ -411,7 +451,7 @@ export default function WaiterDashboard() {
 						style={{
 							padding: '2rem',
 							width: '100%',
-							maxWidth: '360px',
+							maxWidth: '380px',
 							textAlign: 'center',
 							position: 'relative',
 						}}
@@ -457,7 +497,7 @@ export default function WaiterDashboard() {
 							>
 								<QRCodeSVG
 									value={`${appUrl}/table/${showQrModal.id}?token=${showQrModal.qrData}`}
-									size={200}
+									size={220}
 									level="M"
 								/>
 							</div>
@@ -467,31 +507,54 @@ export default function WaiterDashboard() {
 								color: 'var(--text-secondary)',
 								fontSize: '0.75rem',
 								wordBreak: 'break-all',
-								margin: '0 0 0.75rem',
+								margin: '0 0 1rem',
 							}}
 						>
 							{appUrl}/table/{showQrModal.id}?token={showQrModal.qrData}
 						</p>
-						<button
-							onClick={() => {
-								navigator.clipboard.writeText(
-									`${appUrl}/table/${showQrModal!.id}?token=${showQrModal!.qrData}`,
-								);
-								toast('Link copied!', 'success');
-							}}
+						<div
 							style={{
-								background: 'var(--primary)',
-								color: '#fff',
-								border: 'none',
-								borderRadius: '8px',
-								padding: '0.5rem 1.25rem',
-								cursor: 'pointer',
-								fontWeight: 600,
-								fontSize: '0.85rem',
+								display: 'flex',
+								gap: '0.75rem',
+								justifyContent: 'center',
 							}}
 						>
-							Copy Link
-						</button>
+							<button
+								onClick={() => {
+									navigator.clipboard.writeText(
+										`${appUrl}/table/${showQrModal!.id}?token=${showQrModal!.qrData}`,
+									);
+									toast('Link copied!', 'success');
+								}}
+								style={{
+									background: 'var(--primary)',
+									color: '#fff',
+									border: 'none',
+									borderRadius: '8px',
+									padding: '0.5rem 1.25rem',
+									cursor: 'pointer',
+									fontWeight: 600,
+									fontSize: '0.85rem',
+								}}
+							>
+								Copy Link
+							</button>
+							<button
+								onClick={() => window.print()}
+								style={{
+									background: 'var(--glass)',
+									border: '1px solid var(--glass-border)',
+									borderRadius: '8px',
+									padding: '0.5rem 1.25rem',
+									cursor: 'pointer',
+									fontWeight: 600,
+									fontSize: '0.85rem',
+									color: 'var(--text-primary)',
+								}}
+							>
+								Print
+							</button>
+						</div>
 					</div>
 				</div>
 			)}

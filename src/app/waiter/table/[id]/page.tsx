@@ -4,7 +4,7 @@ import { ToastContainer, useToast } from '@/components/Toast';
 import type { Order, OrderStatus, Table } from '@/types';
 import { ArrowLeft, CheckCircle, Clock, Receipt, Utensils } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 const ORDER_STATUS_FLOW: Record<OrderStatus, OrderStatus | null> = {
 	PENDING: 'PREPARING',
@@ -41,7 +41,7 @@ export default function WaiterTablePage() {
 	const [billingAll, setBillingAll] = useState(false);
 	const { toasts, toast, dismiss } = useToast();
 
-	const fetchData = async () => {
+	const fetchData = useCallback(async () => {
 		try {
 			const [tableRes, ordersRes] = await Promise.all([
 				fetch(`/api/tables/${id}`),
@@ -50,15 +50,17 @@ export default function WaiterTablePage() {
 			if (tableRes.ok) setTable(await tableRes.json());
 			if (ordersRes.ok) setOrders(await ordersRes.json());
 		} catch {
-			toast('Failed to load table data', 'error');
+			// silent poll
 		} finally {
 			setLoading(false);
 		}
-	};
+	}, [id]);
 
 	useEffect(() => {
 		fetchData();
-	}, [id]);
+		const interval = setInterval(fetchData, 10_000);
+		return () => clearInterval(interval);
+	}, [fetchData]);
 
 	const advanceOrderStatus = async (order: Order) => {
 		const next = ORDER_STATUS_FLOW[order.status as OrderStatus];
