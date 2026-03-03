@@ -1,88 +1,400 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Users, UtensilsCrossed, CheckCircle, Clock } from 'lucide-react';
+import type { AdminStats, OrderStatus } from '@/types';
+import {
+	Activity,
+	CheckCircle,
+	Clock,
+	RefreshCw,
+	Table2,
+	TrendingUp,
+	Users,
+} from 'lucide-react';
+import Link from 'next/link';
+import { useCallback, useEffect, useState } from 'react';
+
+const STATUS_COLOR: Record<OrderStatus, string> = {
+	PENDING: '#F5A623',
+	PREPARING: '#4A90E2',
+	DELIVERED: '#00A699',
+	BILLED: '#9B59B6',
+};
+
+function SkeletonCard() {
+	return (
+		<div
+			className="glass-panel"
+			style={{
+				padding: '1.5rem',
+				height: '130px',
+				overflow: 'hidden',
+				position: 'relative',
+			}}
+		>
+			<div
+				style={{
+					height: '100%',
+					backgroundImage:
+						'linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.06) 50%, transparent 100%)',
+					backgroundSize: '200% 100%',
+					animation: 'shimmer 1.5s infinite',
+				}}
+			/>
+			<style>{`@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}`}</style>
+		</div>
+	);
+}
 
 export default function AdminDashboard() {
-    const [stats, setStats] = useState({
-        totalTables: 0,
-        occupiedTables: 0,
-        pendingOrders: 0,
-        totalStaff: 0
-    });
+	const [stats, setStats] = useState<AdminStats | null>(null);
+	const [loading, setLoading] = useState(true);
+	const [spinning, setSpinning] = useState(false);
+	const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-    useEffect(() => {
-        // In a real app we would fetch these from an API
-        // For now we simulate an API call retrieving current counts
-        setStats({
-            totalTables: 12,
-            occupiedTables: 3,
-            pendingOrders: 5,
-            totalStaff: 4
-        });
-    }, []);
+	const fetchStats = useCallback(async () => {
+		try {
+			const res = await fetch('/api/admin/stats');
+			if (res.ok) {
+				setStats(await res.json());
+				setLastUpdated(new Date());
+			}
+		} catch (e) {
+			console.error('Failed to load dashboard stats', e);
+		} finally {
+			setLoading(false);
+		}
+	}, []);
 
-    const statCards = [
-        { label: 'Total Tables', value: stats.totalTables, icon: <UtensilsCrossed size={24} />, color: 'var(--primary)' },
-        { label: 'Occupied', value: stats.occupiedTables, icon: <CheckCircle size={24} />, color: 'var(--secondary)' },
-        { label: 'Pending Orders', value: stats.pendingOrders, icon: <Clock size={24} />, color: '#F5A623' },
-        { label: 'Total Staff', value: stats.totalStaff, icon: <Users size={24} />, color: '#4A90E2' },
-    ];
+	useEffect(() => {
+		fetchStats();
+		const interval = setInterval(fetchStats, 30_000);
+		return () => clearInterval(interval);
+	}, [fetchStats]);
 
-    return (
-        <div>
-            <h1 style={{ marginBottom: '2rem' }}>Dashboard Overview</h1>
+	const handleRefresh = async () => {
+		setSpinning(true);
+		await fetchStats();
+		setTimeout(() => setSpinning(false), 600);
+	};
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.5rem' }}>
-                {statCards.map((stat, i) => (
-                    <div key={i} className="glass-panel" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <div style={{
-                            background: `rgba(255, 255, 255, 0.5)`,
-                            color: stat.color,
-                            padding: '1rem',
-                            borderRadius: '12px',
-                            display: 'flex',
-                            boxShadow: 'var(--shadow-sm)'
-                        }}>
-                            {stat.icon}
-                        </div>
-                        <div>
-                            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>{stat.label}</p>
-                            <h2 style={{ margin: 0, fontSize: '2rem' }}>{stat.value}</h2>
-                        </div>
-                    </div>
-                ))}
-            </div>
+	const statCards = stats
+		? [
+				{
+					label: 'Total Tables',
+					value: stats.totalTables,
+					icon: <Table2 size={22} />,
+					color: 'var(--primary)',
+					sub: `${stats.totalTables - stats.occupiedTables} available`,
+				},
+				{
+					label: 'Occupied Tables',
+					value: stats.occupiedTables,
+					icon: <CheckCircle size={22} />,
+					color: 'var(--secondary)',
+					sub: 'currently in use',
+				},
+				{
+					label: 'Active Orders',
+					value: stats.pendingOrders,
+					icon: <Clock size={22} />,
+					color: '#F5A623',
+					sub: 'pending & preparing',
+				},
+				{
+					label: 'Staff Members',
+					value: stats.totalStaff,
+					icon: <Users size={22} />,
+					color: '#4A90E2',
+					sub: 'total accounts',
+				},
+				{
+					label: "Today's Revenue",
+					value: `Rs. ${stats.todayRevenue.toLocaleString()}`,
+					icon: <TrendingUp size={22} />,
+					color: '#00A699',
+					sub: 'from billed orders',
+				},
+			]
+		: [];
 
-            <div style={{ marginTop: '3rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
-                <div className="glass-panel" style={{ padding: '2rem' }}>
-                    <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        Recent Activity
-                    </h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        {/* Dummy activity stream */}
-                        {[
-                            { time: '10:45 AM', event: 'Table 4 ordered 2x Chicken Momo' },
-                            { time: '10:30 AM', event: 'Table 2 paid final bill' },
-                            { time: '10:15 AM', event: 'Waiter "John" logged in' },
-                        ].map((act, idx) => (
-                            <div key={idx} style={{ display: 'flex', gap: '1rem', paddingBottom: '1rem', borderBottom: idx < 2 ? '1px solid var(--border-color)' : 'none' }}>
-                                <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem', whiteSpace: 'nowrap' }}>{act.time}</span>
-                                <span>{act.event}</span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
+	const quickActions = [
+		{ label: 'Manage Menu', href: '/admin/menu', color: 'var(--primary)' },
+		{ label: 'Tables & QR', href: '/admin/tables', color: '#4A90E2' },
+		{ label: 'Manage Staff', href: '/admin/staff', color: 'var(--secondary)' },
+		{ label: 'Settings', href: '/admin/settings', color: '#9B59B6' },
+	];
 
-                <div className="glass-panel" style={{ padding: '2rem', background: 'linear-gradient(135deg, var(--primary), var(--primary-hover))', color: 'white' }}>
-                    <h3 style={{ marginBottom: '1rem' }}>Quick Actions</h3>
-                    <p style={{ marginBottom: '2rem', opacity: 0.9 }}>Need to jump straight to management?</p>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        <button className="btn btn-secondary" style={{ width: '100%', justifyContent: 'flex-start', background: 'rgba(255, 255, 255, 0.2)', border: 'none', color: 'white' }}>+ Add New Menu Item</button>
-                        <button className="btn btn-secondary" style={{ width: '100%', justifyContent: 'flex-start', background: 'rgba(255, 255, 255, 0.2)', border: 'none', color: 'white' }}>Manage Waitstaff</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
+	return (
+		<div>
+			{/* Header */}
+			<div
+				style={{
+					display: 'flex',
+					justifyContent: 'space-between',
+					alignItems: 'center',
+					marginBottom: '2rem',
+				}}
+			>
+				<div>
+					<h1
+						style={{
+							fontSize: '1.75rem',
+							fontWeight: 700,
+							color: 'var(--text-primary)',
+							margin: 0,
+						}}
+					>
+						Dashboard
+					</h1>
+					{lastUpdated && (
+						<p
+							style={{
+								fontSize: '0.8rem',
+								color: 'var(--text-secondary)',
+								margin: '0.25rem 0 0',
+							}}
+						>
+							Last updated: {lastUpdated.toLocaleTimeString()}
+						</p>
+					)}
+				</div>
+				<button
+					onClick={handleRefresh}
+					style={{
+						background: 'var(--glass)',
+						border: '1px solid var(--glass-border)',
+						borderRadius: '8px',
+						padding: '0.5rem 1rem',
+						cursor: 'pointer',
+						display: 'flex',
+						alignItems: 'center',
+						gap: '0.5rem',
+						color: 'var(--text-primary)',
+						fontSize: '0.875rem',
+					}}
+				>
+					<RefreshCw
+						size={16}
+						style={{
+							transition: 'transform 0.6s',
+							transform: spinning ? 'rotate(360deg)' : 'none',
+						}}
+					/>
+					Refresh
+				</button>
+			</div>
+
+			{/* Stat Cards */}
+			<div
+				style={{
+					display: 'grid',
+					gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+					gap: '1rem',
+					marginBottom: '2rem',
+				}}
+			>
+				{loading
+					? Array.from({ length: 5 }).map((_, i) => <SkeletonCard key={i} />)
+					: statCards.map((card) => (
+							<div
+								key={card.label}
+								className="glass-panel"
+								style={{ padding: '1.5rem' }}
+							>
+								<div
+									style={{
+										display: 'flex',
+										justifyContent: 'space-between',
+										alignItems: 'flex-start',
+										marginBottom: '0.75rem',
+									}}
+								>
+									<span
+										style={{
+											color: 'var(--text-secondary)',
+											fontSize: '0.875rem',
+											fontWeight: 500,
+										}}
+									>
+										{card.label}
+									</span>
+									<span
+										style={{
+											color: card.color,
+											background: `${card.color}20`,
+											borderRadius: '8px',
+											padding: '0.35rem',
+										}}
+									>
+										{card.icon}
+									</span>
+								</div>
+								<div
+									style={{
+										fontSize: '1.75rem',
+										fontWeight: 700,
+										color: 'var(--text-primary)',
+									}}
+								>
+									{card.value}
+								</div>
+								<div
+									style={{
+										fontSize: '0.78rem',
+										color: 'var(--text-secondary)',
+										marginTop: '0.25rem',
+									}}
+								>
+									{card.sub}
+								</div>
+							</div>
+						))}
+			</div>
+
+			<div
+				style={{
+					display: 'grid',
+					gridTemplateColumns: '1fr 1fr',
+					gap: '1.5rem',
+				}}
+			>
+				{/* Recent Orders */}
+				<div
+					className="glass-panel"
+					style={{ padding: '1.5rem' }}
+				>
+					<div
+						style={{
+							display: 'flex',
+							alignItems: 'center',
+							gap: '0.5rem',
+							marginBottom: '1rem',
+						}}
+					>
+						<Activity
+							size={18}
+							color="var(--primary)"
+						/>
+						<h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 600 }}>
+							Recent Orders
+						</h2>
+					</div>
+
+					{loading ? (
+						<p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+							Loading…
+						</p>
+					) : !stats || stats.recentOrders.length === 0 ? (
+						<p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+							No orders yet.
+						</p>
+					) : (
+						<div
+							style={{
+								display: 'flex',
+								flexDirection: 'column',
+								gap: '0.75rem',
+							}}
+						>
+							{stats.recentOrders.map((order) => (
+								<div
+									key={order.id}
+									style={{
+										display: 'flex',
+										justifyContent: 'space-between',
+										alignItems: 'center',
+										padding: '0.6rem 0.75rem',
+										background: 'var(--glass)',
+										borderRadius: '8px',
+										border: '1px solid var(--glass-border)',
+									}}
+								>
+									<div>
+										<span style={{ fontWeight: 600, fontSize: '0.875rem' }}>
+											Table {order.table?.tableNumber ?? '?'}
+										</span>
+										<span
+											style={{
+												color: 'var(--text-secondary)',
+												fontSize: '0.78rem',
+												marginLeft: '0.5rem',
+											}}
+										>
+											{new Date(order.createdAt).toLocaleTimeString([], {
+												hour: '2-digit',
+												minute: '2-digit',
+											})}
+										</span>
+									</div>
+									<div
+										style={{
+											display: 'flex',
+											alignItems: 'center',
+											gap: '0.75rem',
+										}}
+									>
+										<span style={{ fontSize: '0.875rem', fontWeight: 600 }}>
+											Rs. {order.totalAmount}
+										</span>
+										<span
+											style={{
+												background:
+													STATUS_COLOR[order.status as OrderStatus] + '22',
+												color: STATUS_COLOR[order.status as OrderStatus],
+												borderRadius: '20px',
+												padding: '0.2rem 0.6rem',
+												fontSize: '0.75rem',
+												fontWeight: 600,
+											}}
+										>
+											{order.status}
+										</span>
+									</div>
+								</div>
+							))}
+						</div>
+					)}
+				</div>
+
+				{/* Quick Actions */}
+				<div
+					className="glass-panel"
+					style={{ padding: '1.5rem' }}
+				>
+					<h2 style={{ margin: '0 0 1rem', fontSize: '1rem', fontWeight: 600 }}>
+						Quick Actions
+					</h2>
+					<div
+						style={{
+							display: 'grid',
+							gridTemplateColumns: '1fr 1fr',
+							gap: '0.75rem',
+						}}
+					>
+						{quickActions.map((action) => (
+							<Link
+								key={action.href}
+								href={action.href}
+								style={{
+									display: 'block',
+									padding: '1rem',
+									background: `${action.color}15`,
+									border: `1px solid ${action.color}40`,
+									borderRadius: '10px',
+									color: action.color,
+									fontWeight: 600,
+									fontSize: '0.875rem',
+									textDecoration: 'none',
+									textAlign: 'center',
+									transition: 'all 0.2s ease',
+								}}
+							>
+								{action.label}
+							</Link>
+						))}
+					</div>
+				</div>
+			</div>
+		</div>
+	);
 }

@@ -1,181 +1,422 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { ToastContainer, useToast } from '@/components/Toast';
+import type { Order, OrderStatus, Table } from '@/types';
+import { ArrowLeft, CheckCircle, Clock, Receipt, Utensils } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
-import { Check, Clock, ReceiptText, ChefHat, ArrowLeft } from 'lucide-react';
-import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
-export default function WaiterTableDetails() {
-    const { id: tableId } = useParams();
-    const router = useRouter();
+const ORDER_STATUS_FLOW: Record<OrderStatus, OrderStatus | null> = {
+	PENDING: 'PREPARING',
+	PREPARING: 'DELIVERED',
+	DELIVERED: 'BILLED',
+	BILLED: null,
+};
 
-    const [table, setTable] = useState<any>(null);
-    const [loading, setLoading] = useState(true);
+const STATUS_CONFIG: Record<
+	OrderStatus,
+	{ label: string; color: string; icon: React.ReactNode }
+> = {
+	PENDING: { label: 'Pending', color: '#F5A623', icon: <Clock size={14} /> },
+	PREPARING: {
+		label: 'Preparing',
+		color: '#4A90E2',
+		icon: <Utensils size={14} />,
+	},
+	DELIVERED: {
+		label: 'Delivered',
+		color: '#00A699',
+		icon: <CheckCircle size={14} />,
+	},
+	BILLED: { label: 'Billed', color: '#9B59B6', icon: <Receipt size={14} /> },
+};
 
-    const fetchTable = async () => {
-        try {
-            const res = await fetch('/api/tables');
-            if (res.ok) {
-                const data = await res.json();
-                const t = data.find((x: any) => x.id === tableId);
-                setTable(t);
-            }
-        } catch (e) { console.error(e); }
-        finally { setLoading(false); }
-    };
+export default function WaiterTablePage() {
+	const { id } = useParams<{ id: string }>();
+	const router = useRouter();
+	const [table, setTable] = useState<Table | null>(null);
+	const [orders, setOrders] = useState<Order[]>([]);
+	const [loading, setLoading] = useState(true);
+	const [updatingOrder, setUpdatingOrder] = useState<string | null>(null);
+	const [billingAll, setBillingAll] = useState(false);
+	const { toasts, toast, dismiss } = useToast();
 
-    useEffect(() => {
-        fetchTable();
-        const intv = setInterval(fetchTable, 5000);
-        return () => clearInterval(intv);
-    }, []);
+	const fetchData = async () => {
+		try {
+			const [tableRes, ordersRes] = await Promise.all([
+				fetch(`/api/tables/${id}`),
+				fetch(`/api/orders?tableId=${id}`),
+			]);
+			if (tableRes.ok) setTable(await tableRes.json());
+			if (ordersRes.ok) setOrders(await ordersRes.json());
+		} catch {
+			toast('Failed to load table data', 'error');
+		} finally {
+			setLoading(false);
+		}
+	};
 
-    const updateOrderStatus = async (orderId: string, status: string) => {
-        try {
-            await fetch(`/api/orders/${orderId}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status })
-            });
-            fetchTable();
-        } catch (e) { console.error(e); }
-    };
+	useEffect(() => {
+		fetchData();
+	}, [id]);
 
-    const markTableServiced = async () => {
-        try {
-            await fetch(`/api/tables/${tableId}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: 'OCCUPIED' })
-            });
-            fetchTable();
-        } catch (e) { console.error(e); }
-    };
+	const advanceOrderStatus = async (order: Order) => {
+		const next = ORDER_STATUS_FLOW[order.status as OrderStatus];
+		if (!next) return;
+		setUpdatingOrder(order.id);
+		try {
+			const res = await fetch(`/api/orders/${order.id}`, {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ status: next }),
+			});
+			if (res.ok) {
+				setOrders((prev) =>
+					prev.map((o) => (o.id === order.id ? { ...o, status: next } : o)),
+				);
+				toast(`Order marked as ${next.toLowerCase()}`, 'success');
+			} else {
+				toast('Failed to update order status', 'error');
+			}
+		} catch {
+			toast('Network error', 'error');
+		} finally {
+			setUpdatingOrder(null);
+		}
+	};
 
-    const generateBill = async () => {
-        if (!confirm('Finalize bill for this table?')) return;
-        try {
-            // Mark all unbilled orders as BILLED
-            for (const order of table.orders) {
-                if (order.status !== 'BILLED') {
-                    await updateOrderStatus(order.id, 'BILLED');
-                }
-            }
-            alert('Bill Generated!');
-            router.push('/waiter');
-        } catch (e) { console.error(e); }
-    };
+	const handleBillAll = async () => {
+		const deliveredOrders = orders.filter((o) => o.status === 'DELIVERED');
+		if (deliveredOrders.length === 0) {
+			toast('No delivered orders to bill', 'info');
+			return;
+		}
+		setBillingAll(true);
+		try {
+			await Promise.all(
+				deliveredOrders.map((o) =>
+					fetch(`/api/orders/${o.id}`, {
+						method: 'PATCH',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ status: 'BILLED' }),
+					}),
+				),
+			);
+			const total = deliveredOrders.reduce((sum, o) => sum + o.totalAmount, 0);
+			setOrders((prev) =>
+				prev.map((o) =>
+					o.status === 'DELIVERED'
+						? { ...o, status: 'BILLED' as OrderStatus }
+						: o,
+				),
+			);
+			toast(`Bill generated! Total: Rs. ${total.toLocaleString()}`, 'success');
+			setTimeout(() => router.push('/waiter'), 1500);
+		} catch {
+			toast('Failed to generate bill', 'error');
+		} finally {
+			setBillingAll(false);
+		}
+	};
 
-    if (loading) return <div>Loading table details...</div>;
-    if (!table) return <div>Table not found.</div>;
+	const handleMarkServiced = async () => {
+		try {
+			const res = await fetch(`/api/tables/${id}`, {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ status: 'AVAILABLE' }),
+			});
+			if (res.ok) {
+				toast('Table marked as available', 'success');
+				setTimeout(() => router.push('/waiter'), 1000);
+			} else {
+				toast('Failed to update table', 'error');
+			}
+		} catch {
+			toast('Network error', 'error');
+		}
+	};
 
-    const totalUnbilled = table.orders
-        .filter((o: any) => o.status !== 'BILLED')
-        .reduce((acc: number, curr: any) => acc + curr.totalAmount, 0);
+	if (loading) {
+		return (
+			<div style={{ padding: '2rem' }}>
+				{Array.from({ length: 3 }).map((_, i) => (
+					<div
+						key={i}
+						className="glass-panel"
+						style={{
+							padding: '1.5rem',
+							marginBottom: '1rem',
+							height: '100px',
+							opacity: 0.5,
+						}}
+					/>
+				))}
+			</div>
+		);
+	}
 
-    return (
-        <div>
-            <Link href="/waiter" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', marginBottom: '2rem', fontWeight: 600 }}>
-                <ArrowLeft size={18} /> Back to Floor Plan
-            </Link>
+	if (!table) {
+		return (
+			<div
+				className="glass-panel"
+				style={{ padding: '3rem', textAlign: 'center' }}
+			>
+				<p style={{ color: 'var(--text-secondary)' }}>Table not found.</p>
+			</div>
+		);
+	}
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                <div>
-                    <h1 style={{ marginBottom: '0.5rem' }}>Table {table.tableNumber} Dashboard</h1>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <span style={{ fontWeight: 600, color: 'var(--text-muted)' }}>Status:</span>
-                        <span style={{
-                            background: table.status === 'NEEDS_SERVICE' ? 'rgba(255, 90, 95, 0.1)' : 'rgba(0, 166, 153, 0.1)',
-                            color: table.status === 'NEEDS_SERVICE' ? 'var(--primary)' : 'var(--secondary)',
-                            padding: '0.25rem 0.75rem',
-                            borderRadius: '8px',
-                            fontSize: '0.875rem',
-                            fontWeight: 700
-                        }}>
-                            {table.status.replace('_', ' ')}
-                        </span>
-                        {table.status === 'NEEDS_SERVICE' && (
-                            <button
-                                onClick={markTableServiced}
-                                className="btn btn-primary"
-                                style={{ padding: '0.25rem 1rem', fontSize: '0.875rem', marginLeft: '1rem' }}
-                            >
-                                Mark Serviced
-                            </button>
-                        )}
-                    </div>
-                </div>
+	const activeOrders = orders.filter((o) => o.status !== 'BILLED');
+	const totalRevenue = orders
+		.filter((o) => o.status === 'DELIVERED')
+		.reduce((sum, o) => sum + o.totalAmount, 0);
 
-                <div style={{ textAlign: 'right' }}>
-                    <p style={{ color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Unbilled Total</p>
-                    <h2 style={{ color: 'var(--primary)', margin: 0 }}>Rs. {totalUnbilled.toFixed(2)}</h2>
-                </div>
-            </div>
+	return (
+		<div>
+			<ToastContainer
+				toasts={toasts}
+				dismiss={dismiss}
+			/>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem' }}>
-                {table.orders.length === 0 ? (
-                    <div className="glass-panel" style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-                        No active orders for this table.
-                    </div>
-                ) : (
-                    table.orders.map((order: any) => (
-                        <div key={order.id} className="glass-panel" style={{ padding: '1.5rem' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
-                                <div style={{ fontWeight: 600 }}>
-                                    Order #{order.id.slice(0, 8)}
-                                    <span style={{ marginLeft: '1rem', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
-                                        {new Date(order.createdAt).toLocaleTimeString()}
-                                    </span>
-                                </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <span style={{ fontWeight: 600, marginRight: '1rem' }}>Rs. {order.totalAmount.toFixed(2)}</span>
+			{/* Header */}
+			<div
+				style={{
+					display: 'flex',
+					alignItems: 'center',
+					gap: '1rem',
+					marginBottom: '2rem',
+				}}
+			>
+				<button
+					onClick={() => router.push('/waiter')}
+					style={{
+						background: 'none',
+						border: 'none',
+						cursor: 'pointer',
+						color: 'var(--text-secondary)',
+						display: 'flex',
+					}}
+				>
+					<ArrowLeft size={20} />
+				</button>
+				<h1 style={{ fontSize: '1.75rem', fontWeight: 700, margin: 0 }}>
+					Table {table.tableNumber}
+				</h1>
+				<span
+					style={{
+						background:
+							table.status === 'NEEDS_SERVICE'
+								? '#FF5A5F20'
+								: table.status === 'OCCUPIED'
+									? '#F5A62320'
+									: '#00A69920',
+						color:
+							table.status === 'NEEDS_SERVICE'
+								? '#FF5A5F'
+								: table.status === 'OCCUPIED'
+									? '#F5A623'
+									: '#00A699',
+						borderRadius: '20px',
+						padding: '0.25rem 0.75rem',
+						fontSize: '0.8rem',
+						fontWeight: 600,
+					}}
+				>
+					{table.status.replace('_', ' ')}
+				</span>
+			</div>
 
-                                    {order.status === 'PENDING' && (
-                                        <button onClick={() => updateOrderStatus(order.id, 'PREPARING')} className="btn btn-secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}>
-                                            <ChefHat size={16} /> Accept & Prepare
-                                        </button>
-                                    )}
-                                    {order.status === 'PREPARING' && (
-                                        <button onClick={() => updateOrderStatus(order.id, 'DELIVERED')} className="btn btn-primary" style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}>
-                                            <Check size={16} /> Mark Delivered
-                                        </button>
-                                    )}
-                                    {order.status === 'DELIVERED' && (
-                                        <span style={{ color: 'var(--secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600 }}>
-                                            <Check size={18} /> Delivered
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
+			{/* Action Buttons */}
+			<div
+				style={{
+					display: 'flex',
+					gap: '0.75rem',
+					marginBottom: '1.5rem',
+					flexWrap: 'wrap',
+				}}
+			>
+				{totalRevenue > 0 && (
+					<button
+						onClick={handleBillAll}
+						disabled={billingAll}
+						style={{
+							background: '#9B59B6',
+							color: '#fff',
+							border: 'none',
+							borderRadius: '10px',
+							padding: '0.65rem 1.25rem',
+							fontWeight: 600,
+							cursor: billingAll ? 'not-allowed' : 'pointer',
+							opacity: billingAll ? 0.7 : 1,
+							display: 'flex',
+							alignItems: 'center',
+							gap: '0.5rem',
+							fontSize: '0.875rem',
+						}}
+					>
+						<Receipt size={16} />
+						{billingAll
+							? 'Generating…'
+							: `Bill Delivered (Rs. ${totalRevenue.toLocaleString()})`}
+					</button>
+				)}
+				<button
+					onClick={handleMarkServiced}
+					style={{
+						background: 'var(--glass)',
+						border: '1px solid var(--glass-border)',
+						borderRadius: '10px',
+						padding: '0.65rem 1.25rem',
+						fontWeight: 600,
+						cursor: 'pointer',
+						color: 'var(--text-primary)',
+						fontSize: '0.875rem',
+					}}
+				>
+					Mark Table Available
+				</button>
+			</div>
 
-                            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                                {order.items.map((item: any) => (
-                                    <li key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                            <span style={{ background: 'rgba(0,0,0,0.05)', width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '6px', fontWeight: 600 }}>
-                                                {item.quantity}
-                                            </span>
-                                            <span>{item.menuItem.name}</span>
-                                        </div>
-                                        <span style={{ color: 'var(--text-muted)' }}>Rs. {item.subTotal.toFixed(2)}</span>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    ))
-                )}
-            </div>
+			{/* Orders */}
+			{activeOrders.length === 0 ? (
+				<div
+					className="glass-panel"
+					style={{ padding: '2.5rem', textAlign: 'center' }}
+				>
+					<p style={{ color: 'var(--text-secondary)', margin: 0 }}>
+						No active orders for this table.
+					</p>
+				</div>
+			) : (
+				<div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+					{activeOrders.map((order) => {
+						const cfg = STATUS_CONFIG[order.status as OrderStatus];
+						const next = ORDER_STATUS_FLOW[order.status as OrderStatus];
+						return (
+							<div
+								key={order.id}
+								className="glass-panel"
+								style={{ padding: '1.25rem' }}
+							>
+								<div
+									style={{
+										display: 'flex',
+										justifyContent: 'space-between',
+										alignItems: 'center',
+										marginBottom: '1rem',
+									}}
+								>
+									<div>
+										<span style={{ fontWeight: 700 }}>
+											Order #{order.id.slice(-6).toUpperCase()}
+										</span>
+										<span
+											style={{
+												color: 'var(--text-secondary)',
+												fontSize: '0.8rem',
+												marginLeft: '0.5rem',
+											}}
+										>
+											{new Date(order.createdAt).toLocaleTimeString([], {
+												hour: '2-digit',
+												minute: '2-digit',
+											})}
+										</span>
+									</div>
+									<div
+										style={{
+											display: 'flex',
+											alignItems: 'center',
+											gap: '0.75rem',
+										}}
+									>
+										<span
+											style={{
+												background: cfg.color + '20',
+												color: cfg.color,
+												borderRadius: '20px',
+												padding: '0.25rem 0.65rem',
+												fontSize: '0.75rem',
+												fontWeight: 600,
+												display: 'flex',
+												alignItems: 'center',
+												gap: '0.3rem',
+											}}
+										>
+											{cfg.icon} {cfg.label}
+										</span>
+										{next && (
+											<button
+												onClick={() => advanceOrderStatus(order)}
+												disabled={updatingOrder === order.id}
+												style={{
+													background: 'var(--primary)',
+													color: '#fff',
+													border: 'none',
+													borderRadius: '8px',
+													padding: '0.4rem 0.85rem',
+													fontSize: '0.8rem',
+													fontWeight: 600,
+													cursor:
+														updatingOrder === order.id
+															? 'not-allowed'
+															: 'pointer',
+													opacity: updatingOrder === order.id ? 0.7 : 1,
+												}}
+											>
+												{updatingOrder === order.id
+													? '…'
+													: `Mark ${next.charAt(0) + next.slice(1).toLowerCase()}`}
+											</button>
+										)}
+									</div>
+								</div>
 
-            <div style={{ marginTop: '3rem', display: 'flex', justifyContent: 'center' }}>
-                <button
-                    onClick={generateBill}
-                    className="btn btn-primary"
-                    style={{ width: '100%', maxWidth: '400px', padding: '1.25rem', fontSize: '1.125rem' }}
-                    disabled={table.orders.length === 0}
-                >
-                    <ReceiptText size={20} /> Generate Final Bill & Checkout
-                </button>
-            </div>
-        </div>
-    );
+								<div
+									style={{
+										borderTop: '1px solid var(--glass-border)',
+										paddingTop: '0.75rem',
+									}}
+								>
+									{order.items &&
+										order.items.map((item) => (
+											<div
+												key={item.id}
+												style={{
+													display: 'flex',
+													justifyContent: 'space-between',
+													padding: '0.3rem 0',
+													fontSize: '0.875rem',
+												}}
+											>
+												<span style={{ color: 'var(--text-secondary)' }}>
+													{item.quantity}x {item.menuItem?.name || 'Item'}
+												</span>
+												<span style={{ fontWeight: 600 }}>
+													Rs. {item.subTotal}
+												</span>
+											</div>
+										))}
+									<div
+										style={{
+											display: 'flex',
+											justifyContent: 'space-between',
+											marginTop: '0.5rem',
+											paddingTop: '0.5rem',
+											borderTop: '1px solid var(--glass-border)',
+											fontWeight: 700,
+										}}
+									>
+										<span>Total</span>
+										<span>Rs. {order.totalAmount.toLocaleString()}</span>
+									</div>
+								</div>
+							</div>
+						);
+					})}
+				</div>
+			)}
+		</div>
+	);
 }
