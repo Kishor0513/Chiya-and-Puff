@@ -18,7 +18,7 @@ import {
 	X,
 } from 'lucide-react';
 import { useParams, useSearchParams } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 type Tab = 'menu' | 'orders';
 type PayMethod = 'cash' | 'esewa' | 'khalti' | 'fonepay';
@@ -72,6 +72,8 @@ export default function CustomerMenuPage() {
 	const [cancellingId, setCancellingId] = useState<string | null>(null);
 	const [showPayment, setShowPayment] = useState(false);
 	const [paymentMethod, setPaymentMethod] = useState<PayMethod>('cash');
+	const [tablePaid, setTablePaid] = useState(false);
+	const hadBilledRef = useRef(false);
 	const { toasts, toast, dismiss } = useToast();
 
 	useEffect(() => {
@@ -82,17 +84,32 @@ export default function CustomerMenuPage() {
 			.finally(() => setMenuLoading(false));
 	}, []);
 
+	const resetSession = useCallback(() => {
+		setOrders([]);
+		setCart([]);
+		setShowPayment(false);
+		setTab('menu');
+		setTablePaid(false);
+		hadBilledRef.current = false;
+	}, []);
+
 	const fetchOrders = useCallback(async () => {
 		try {
 			const res = await fetch(`/api/orders?tableId=${id}`);
 			if (res.ok) {
 				const data: Order[] = await res.json();
+				// If waiter cleared the table (marked AVAILABLE), all orders vanish
+				if (data.length === 0 && hadBilledRef.current) {
+					resetSession();
+					toast('Table cleared — welcome!', 'success');
+					return;
+				}
 				setOrders(data);
 			}
 		} catch {
 			// silent poll
 		}
-	}, [id]);
+	}, [id, resetSession, toast]);
 
 	useEffect(() => {
 		fetchOrders();
@@ -109,9 +126,12 @@ export default function CustomerMenuPage() {
 
 	// Auto-show payment modal when waiter delivers the bill
 	useEffect(() => {
-		if (billedOrders.length > 0 && !showPayment) {
-			setShowPayment(true);
-			setTab('orders');
+		if (billedOrders.length > 0) {
+			hadBilledRef.current = true;
+			if (!showPayment) {
+				setShowPayment(true);
+				setTab('orders');
+			}
 		}
 	}, [billedOrders.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -205,6 +225,61 @@ export default function CustomerMenuPage() {
 	);
 	const itemQty = (itemId: string) =>
 		cart.find((c) => c.id === itemId)?.quantity ?? 0;
+
+	if (tablePaid) {
+		return (
+			<div
+				style={{
+					minHeight: '100vh',
+					background: 'var(--bg)',
+					display: 'flex',
+					flexDirection: 'column',
+					alignItems: 'center',
+					justifyContent: 'center',
+					padding: '2rem',
+					textAlign: 'center',
+				}}
+			>
+				<ToastContainer
+					toasts={toasts}
+					dismiss={dismiss}
+				/>
+				<PartyPopper
+					size={64}
+					color="#9B59B6"
+					style={{ marginBottom: '1.25rem' }}
+				/>
+				<h1
+					style={{ margin: '0 0 0.5rem', fontSize: '1.75rem', fontWeight: 800 }}
+				>
+					Thank You! 🙏
+				</h1>
+				<p
+					style={{
+						color: 'var(--text-secondary)',
+						fontSize: '1rem',
+						maxWidth: '280px',
+						lineHeight: 1.6,
+					}}
+				>
+					It was a pleasure serving you at
+					<br />
+					<strong>Chiya &amp; Puff</strong>.<br />
+					Have a wonderful day!
+				</p>
+				<p
+					style={{
+						marginTop: '2rem',
+						color: 'var(--text-secondary)',
+						fontSize: '0.8rem',
+						opacity: 0.6,
+					}}
+				>
+					Scan the QR code at your table to start a new order.
+				</p>
+			</div>
+		);
+	}
 
 	return (
 		<div
@@ -624,9 +699,25 @@ export default function CustomerMenuPage() {
 							{billedOrders.length > 0 && (
 								<button
 									onClick={() => setShowPayment(true)}
-									style={{ width: '100%', background: '#9B59B6', color: '#fff', border: 'none', borderRadius: '12px', padding: '0.85rem', fontWeight: 700, fontSize: '0.95rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}
+									style={{
+										width: '100%',
+										background: '#9B59B6',
+										color: '#fff',
+										border: 'none',
+										borderRadius: '12px',
+										padding: '0.85rem',
+										fontWeight: 700,
+										fontSize: '0.95rem',
+										cursor: 'pointer',
+										display: 'flex',
+										alignItems: 'center',
+										justifyContent: 'center',
+										gap: '0.5rem',
+										marginBottom: '0.75rem',
+									}}
 								>
-									<Receipt size={18} /> View Bill &amp; Pay — Rs. {billedTotal.toLocaleString()}
+									<Receipt size={18} /> View Bill &amp; Pay — Rs.{' '}
+									{billedTotal.toLocaleString()}
 								</button>
 							)}
 							{activeOrders.map((order) => {
@@ -1195,8 +1286,8 @@ export default function CustomerMenuPage() {
 
 						<button
 							onClick={() => {
-								setShowPayment(false);
-								toast('Thank you for dining at Chiya & Puff! 🙏', 'success');
+								resetSession();
+								setTablePaid(true);
 							}}
 							style={{
 								width: '100%',
