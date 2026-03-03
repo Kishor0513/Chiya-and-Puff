@@ -1,36 +1,74 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Chiya and Puff 🥟☕
 
-## Getting Started
+A modern restaurant management system designed for traditional Nepalese cuisine. Built with Next.js, Prisma, and SQLite, this project provides a seamless experience for both administrators and waitstaff.
 
-First, run the development server:
+## 🚀 Quick Start
+
+To run this project on your local machine (macOS or Windows), follow these steps:
+
+### 1. Prerequisites
+- Ensure you have [Node.js](https://nodejs.org/) installed (v18 or higher recommended).
+- [Git](https://git-scm.com/) for version control.
+
+### 2. Setup
+Open your terminal (Terminal on macOS, CMD or PowerShell on Windows) and run:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Clone the repository (if you haven't already)
+# git clone <repository-url>
+# cd "Chiya and Puff"
+
+# Run the automated setup
+npm run setup
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The `setup` command will:
+- Install all necessary dependencies.
+- Generate the Prisma client.
+- Initialize the SQLite database and seed it with the default Nepalese menu and accounts.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 3. Run Development Server
+```bash
+npm run dev
+```
+Open [http://localhost:3000](http://localhost:3000) to view the application.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## 💻 Cross-Platform Support
 
-To learn more about Next.js, take a look at the following resources:
+This project is optimized to run identically on **macOS** and **Windows**.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Database**: Uses SQLite (`dev.db`), which is file-based and requires no separate database installation.
+- **Environment**: Rename `.env.example` to `.env` if you need to customize settings, though it comes pre-configured for local development.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## 📤 Uploading to GitHub
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+If you want to host this project on your GitHub:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Create a new repository on [GitHub](https://github.com/new).
+2. Copy the remote URL (e.g., `https://github.com/your-username/chiya-and-puff.git`).
+3. Run the following commands:
+
+```bash
+git remote add origin <your-repository-url>
+git branch -M main
+git push -u origin main
+```
+
+---
+
+## 🛠 Tech Stack
+- **Framework**: Next.js
+- **Database**: Prisma with SQLite
+- **Authentication**: Bcryptjs & JWT (Jose)
+- **Styling**: Vanilla CSS / React Components
+- **Icons**: Lucide React
+
+## 👥 Default Accounts
+After running `npm run setup`, you can log in with:
+- **Admin**: `admin` / `admin123`
+- **Waiter**: `waiter1` / `waiter123`
+
