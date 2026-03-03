@@ -104,7 +104,13 @@ export default function CustomerMenuPage() {
 					toast('Table cleared — welcome!', 'success');
 					return;
 				}
-				setOrders(data);
+				// On fresh page load (new QR scan), ignore stale BILLED orders
+				// from a previous session — only include them once they arrive in
+				// the current active session (hadBilledRef becomes true).
+				const visible = hadBilledRef.current
+					? data
+					: data.filter((o) => o.status !== 'BILLED');
+				setOrders(visible);
 			}
 		} catch {
 			// silent poll
