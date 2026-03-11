@@ -1,16 +1,18 @@
 'use client';
 
 import { ToastContainer, useToast } from '@/components/Toast';
+import { SkeletonTable } from '@/components/ui/Skeleton';
 import type { Table } from '@/types';
 import { AlertCircle, Copy, PlusCircle, QrCode, X } from 'lucide-react';
 import Link from 'next/link';
 import { QRCodeSVG } from 'qrcode.react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 const STATUS_CONFIG = {
 	AVAILABLE: { label: 'Available', color: '#00A699' },
 	OCCUPIED: { label: 'Occupied', color: '#F5A623' },
 	NEEDS_SERVICE: { label: 'Needs Service', color: '#FF5A5F' },
+	BILL_REQUESTED: { label: 'Bill Requested', color: '#9B59B6' },
 } as const;
 
 export default function WaiterDashboard() {
@@ -20,18 +22,55 @@ export default function WaiterDashboard() {
 	const [showQrModal, setShowQrModal] = useState<Table | null>(null);
 	const [newTableNumber, setNewTableNumber] = useState('');
 	const [creating, setCreating] = useState(false);
+	const isInitialFetch = useRef(true);
+	const previousServiceTables = useRef<string[]>([]);
+	const previousBillTables = useRef<string[]>([]);
+	const serviceSectionRef = useRef<HTMLDivElement | null>(null);
+	const billSectionRef = useRef<HTMLDivElement | null>(null);
 	const { toasts, toast, dismiss } = useToast();
 
 	const fetchTables = useCallback(async () => {
 		try {
 			const res = await fetch('/api/tables');
-			if (res.ok) setTables(await res.json());
+			if (res.ok) {
+				const nextTables: Table[] = await res.json();
+				const currentNeedsService = nextTables
+					.filter((t) => t.status === 'NEEDS_SERVICE')
+					.map((t) => t.id);
+				const currentBillRequests = nextTables
+					.filter((t) => t.status === 'BILL_REQUESTED')
+					.map((t) => t.id);
+
+				if (!isInitialFetch.current) {
+					const newlyRequested = nextTables.filter(
+						(t) =>
+							t.status === 'NEEDS_SERVICE' &&
+							!previousServiceTables.current.includes(t.id),
+					);
+					for (const table of newlyRequested) {
+						toast(`Service request from Table ${table.tableNumber}`, 'info');
+					}
+					const newlyBilled = nextTables.filter(
+						(t) =>
+							t.status === 'BILL_REQUESTED' &&
+							!previousBillTables.current.includes(t.id),
+					);
+					for (const table of newlyBilled) {
+						toast(`Bill requested by Table ${table.tableNumber}`, 'info');
+					}
+				}
+
+				previousServiceTables.current = currentNeedsService;
+				previousBillTables.current = currentBillRequests;
+				isInitialFetch.current = false;
+				setTables(nextTables);
+			}
 		} catch {
 			// silent poll fail
 		} finally {
 			setLoading(false);
 		}
-	}, []);
+	}, [toast]);
 
 	useEffect(() => {
 		fetchTables();
@@ -78,6 +117,23 @@ export default function WaiterDashboard() {
 			? window.location.origin
 			: process.env.NEXT_PUBLIC_APP_URL || '';
 
+	const serviceTables = tables.filter((t) => t.status === 'NEEDS_SERVICE');
+	const billRequestTables = tables.filter((t) => t.status === 'BILL_REQUESTED');
+
+	const jumpToServiceRequests = () => {
+		serviceSectionRef.current?.scrollIntoView({
+			behavior: 'smooth',
+			block: 'start',
+		});
+	};
+
+	const jumpToBillRequests = () => {
+		billSectionRef.current?.scrollIntoView({
+			behavior: 'smooth',
+			block: 'start',
+		});
+	};
+
 	return (
 		<div>
 			<ToastContainer
@@ -94,16 +150,59 @@ export default function WaiterDashboard() {
 					marginBottom: '2rem',
 				}}
 			>
-				<h1
-					style={{
-						fontSize: '1.75rem',
-						fontWeight: 700,
-						color: 'var(--text-primary)',
-						margin: 0,
-					}}
-				>
-					Table Floor Plan
-				</h1>
+				<div>
+					<h1
+						style={{
+							fontSize: '1.75rem',
+							fontWeight: 700,
+							color: 'var(--text-primary)',
+							margin: 0,
+						}}
+					>
+						Table Floor Plan
+					</h1>
+					<div
+						style={{
+							display: 'flex',
+							gap: '0.5rem',
+							marginTop: '0.55rem',
+							flexWrap: 'wrap',
+						}}
+					>
+						<button
+							type="button"
+							onClick={jumpToServiceRequests}
+							style={{
+								fontSize: '0.78rem',
+								fontWeight: 700,
+								color: '#FF5A5F',
+								background: '#FF5A5F20',
+								border: '1px solid #FF5A5F40',
+								borderRadius: '999px',
+								padding: '0.2rem 0.6rem',
+								cursor: 'pointer',
+							}}
+						>
+							Service: {serviceTables.length}
+						</button>
+						<button
+							type="button"
+							onClick={jumpToBillRequests}
+							style={{
+								fontSize: '0.78rem',
+								fontWeight: 700,
+								color: '#9B59B6',
+								background: '#9B59B620',
+								border: '1px solid #9B59B640',
+								borderRadius: '999px',
+								padding: '0.2rem 0.6rem',
+								cursor: 'pointer',
+							}}
+						>
+							Bills: {billRequestTables.length}
+						</button>
+					</div>
+				</div>
 				<button
 					onClick={() => setShowAddModal(true)}
 					style={{
@@ -157,6 +256,90 @@ export default function WaiterDashboard() {
 				))}
 			</div>
 
+			{serviceTables.length > 0 && (
+				<div
+					ref={serviceSectionRef}
+					className="glass-panel"
+					style={{
+						padding: '0.9rem 1rem',
+						marginBottom: '1rem',
+						borderLeft: '4px solid #FF5A5F',
+					}}
+				>
+					<div
+						style={{
+							fontWeight: 700,
+							fontSize: '0.9rem',
+							marginBottom: '0.4rem',
+						}}
+					>
+						Customer call requests
+					</div>
+					<div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+						{serviceTables.map((table) => (
+							<Link
+								key={table.id}
+								href={`/waiter/table/${table.id}`}
+								style={{
+									textDecoration: 'none',
+									fontSize: '0.8rem',
+									fontWeight: 700,
+									color: '#FF5A5F',
+									background: '#FF5A5F20',
+									border: '1px solid #FF5A5F40',
+									borderRadius: '999px',
+									padding: '0.3rem 0.65rem',
+								}}
+							>
+								Table {table.tableNumber}
+							</Link>
+						))}
+					</div>
+				</div>
+			)}
+
+			{billRequestTables.length > 0 && (
+				<div
+					ref={billSectionRef}
+					className="glass-panel"
+					style={{
+						padding: '0.9rem 1rem',
+						marginBottom: '1rem',
+						borderLeft: '4px solid #9B59B6',
+					}}
+				>
+					<div
+						style={{
+							fontWeight: 700,
+							fontSize: '0.9rem',
+							marginBottom: '0.4rem',
+						}}
+					>
+						Bill requests
+					</div>
+					<div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+						{billRequestTables.map((table) => (
+							<Link
+								key={table.id}
+								href={`/waiter/table/${table.id}`}
+								style={{
+									textDecoration: 'none',
+									fontSize: '0.8rem',
+									fontWeight: 700,
+									color: '#9B59B6',
+									background: '#9B59B620',
+									border: '1px solid #9B59B640',
+									borderRadius: '999px',
+									padding: '0.3rem 0.65rem',
+								}}
+							>
+								Table {table.tableNumber}
+							</Link>
+						))}
+					</div>
+				</div>
+			)}
+
 			{/* Table Grid */}
 			{loading ? (
 				<div
@@ -167,11 +350,7 @@ export default function WaiterDashboard() {
 					}}
 				>
 					{Array.from({ length: 6 }).map((_, i) => (
-						<div
-							key={i}
-							className="glass-panel"
-							style={{ padding: '1.5rem', height: '160px', opacity: 0.5 }}
-						/>
+						<SkeletonTable key={i} />
 					))}
 				</div>
 			) : tables.length === 0 ? (

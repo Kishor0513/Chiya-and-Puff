@@ -1,74 +1,117 @@
-# Chiya and Puff 🥟☕
+# Chiya and Puff
 
-A modern restaurant management system designed for traditional Nepalese cuisine. Built with Next.js, Prisma, and SQLite, this project provides a seamless experience for both administrators and waitstaff.
+Chiya and Puff is a restaurant operations app for a Nepalese menu. It combines a public QR ordering flow with separate dashboards for admin, waiter, and kitchen staff.
 
-## 🚀 Quick Start
+## Features
 
-To run this project on your local machine (macOS or Windows), follow these steps:
+- Public menu and QR-based table ordering.
+- Order tracking for guests, including billed orders and waiter call requests.
+- Waiter table management with QR links and service-state updates.
+- Kitchen display for preparing and ready orders with chef-only completion controls.
+- Admin dashboard for menu, tables, staff, and analytics.
+- Distinct table request types for service calls and bill requests.
+- Customer bill modal with receipt-style layout and print/share actions.
+- Prisma-backed data layer with a local SQLite database for development.
 
-### 1. Prerequisites
-- Ensure you have [Node.js](https://nodejs.org/) installed (v18 or higher recommended).
-- [Git](https://git-scm.com/) for version control.
+## Operational Flow
 
-### 2. Setup
-Open your terminal (Terminal on macOS, CMD or PowerShell on Windows) and run:
+- Customer places order from table QR page.
+- Waiter starts preparation by moving order from pending to preparing.
+- Chef marks order delivered when ready.
+- Waiter can generate the final bill.
+- Customer can request bill any time and preview payable totals.
+- After payment confirmation, orders remain visible until staff clears the table.
+- Session fully resets only after waiter/admin marks the table available.
+
+## Tech Stack
+
+- Next.js 16 App Router
+- React 19
+- Prisma ORM
+- SQLite for local development
+- JWT authentication with jose
+- bcryptjs for password hashing
+
+## Prerequisites
+
+- Node.js 20 or newer recommended
+- npm
+
+## Local Setup
+
+1. Install dependencies.
 
 ```bash
-# Clone the repository (if you haven't already)
-# git clone <repository-url>
-# cd "Chiya and Puff"
-
-# Run the automated setup
-npm run setup
+npm install
 ```
 
-The `setup` command will:
-- Install all necessary dependencies.
-- Generate the Prisma client.
-- Initialize the SQLite database and seed it with the default Nepalese menu and accounts.
+2. Create a local env file if you want to override the defaults.
 
-### 3. Run Development Server
+```bash
+cp .env.example .env
+```
+
+3. Generate Prisma Client, create the SQLite schema, and seed default data.
+
+```bash
+npm run db:setup
+```
+
+4. Start the development server.
+
 ```bash
 npm run dev
 ```
-Open [http://localhost:3000](http://localhost:3000) to view the application.
 
----
+Open http://localhost:3000.
 
-## 💻 Cross-Platform Support
+## Scripts
 
-This project is optimized to run identically on **macOS** and **Windows**.
+- `npm run dev` starts the development server.
+- `npm run build` creates a production build.
+- `npm run start` serves the production build.
+- `npm run lint` runs ESLint.
+- `npm run db:setup` pushes the Prisma schema and seeds the database.
+- `npm run setup` installs dependencies, generates Prisma Client, and runs the database setup.
 
-- **Database**: Uses SQLite (`dev.db`), which is file-based and requires no separate database installation.
-- **Environment**: Rename `.env.example` to `.env` if you need to customize settings, though it comes pre-configured for local development.
+## Default Accounts
 
----
+The seed script creates these users if they do not already exist:
 
-## 📤 Uploading to GitHub
+- Admin: `admin` / `admin123`
+- Waiter: `waiter1` / `waiter123`
+- Chef: `chef` / `chef123`
 
-If you want to host this project on your GitHub:
+## Default Seed Data
 
-1. Create a new repository on [GitHub](https://github.com/new).
-2. Copy the remote URL (e.g., `https://github.com/your-username/chiya-and-puff.git`).
-3. Run the following commands:
+- 5 tables
+- Nepalese menu items across mains, starters, drinks, and desserts
 
-```bash
-git remote add origin <your-repository-url>
-git branch -M main
-git push -u origin main
-```
+## Environment Notes
 
----
+- Local development uses SQLite configured in `prisma/schema.prisma`.
+- `JWT_SECRET` is optional in development but should be set explicitly outside local testing.
+- `NEXT_PUBLIC_APP_URL` is used when generating shareable table links from the waiter dashboard.
 
-## 🛠 Tech Stack
-- **Framework**: Next.js
-- **Database**: Prisma with SQLite
-- **Authentication**: Bcryptjs & JWT (Jose)
-- **Styling**: Vanilla CSS / React Components
-- **Icons**: Lucide React
+## Main Routes
 
-## 👥 Default Accounts
-After running `npm run setup`, you can log in with:
-- **Admin**: `admin` / `admin123`
-- **Waiter**: `waiter1` / `waiter123`
+- `/` public landing page and menu
+- `/login` staff login
+- `/admin` admin dashboard
+- `/waiter` waiter dashboard
+- `/kitchen` kitchen display
+- `/table/:id` guest ordering page for a table token
 
+## Billing Behavior
+
+- Final billed orders are shown in a receipt-style format for guests.
+- Guests can print the bill directly from the table page.
+- Guests can share the bill using the device share sheet, with clipboard fallback.
+- Payment confirmation no longer clears active orders immediately; table closure does.
+
+## Build Status
+
+As of March 11, 2026:
+
+- `npm run lint` passes.
+- `npm run build` passes after updating the kitchen auth route for Next.js 16 async cookie access.

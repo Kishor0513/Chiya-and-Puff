@@ -23,7 +23,9 @@ export async function GET(request: NextRequest) {
 		] = await Promise.all([
 			prisma.table.count(),
 			prisma.table.count({
-				where: { status: { in: ['OCCUPIED', 'NEEDS_SERVICE'] } },
+				where: {
+					status: { in: ['OCCUPIED', 'NEEDS_SERVICE', 'BILL_REQUESTED'] },
+				},
 			}),
 			prisma.order.count({
 				where: { status: { in: ['PENDING', 'PREPARING'] } },

@@ -26,7 +26,7 @@ export default function HomeTerminal() {
             }
             const data = await res.json();
             router.push(`/table/${data.id}?token=${data.qrData}`);
-        } catch (err) {
+        } catch {
             setError('Network error connecting to the terminal.');
             setLoading(false);
         }

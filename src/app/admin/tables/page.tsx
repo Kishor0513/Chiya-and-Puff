@@ -10,6 +10,7 @@ const STATUS_CONFIG = {
 	AVAILABLE: { label: 'Available', color: '#00A699' },
 	OCCUPIED: { label: 'Occupied', color: '#F5A623' },
 	NEEDS_SERVICE: { label: 'Needs Service', color: '#FF5A5F' },
+	BILL_REQUESTED: { label: 'Bill Requested', color: '#9B59B6' },
 } as const;
 
 export default function AdminTablesPage() {
@@ -30,7 +31,7 @@ export default function AdminTablesPage() {
 			.then(setTables)
 			.catch(() => toast('Failed to load tables', 'error'))
 			.finally(() => setLoading(false));
-	}, []);
+	}, [toast]);
 
 	const handleAddTable = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -100,6 +101,59 @@ export default function AdminTablesPage() {
 
 	return (
 		<div>
+			<style>{`
+				@media print {
+					body * { visibility: hidden; }
+					.print-section, .print-section * { visibility: visible; }
+					.print-section {
+						position: absolute;
+						left: 0;
+						top: 0;
+						width: 100%;
+						display: grid !important;
+						grid-template-columns: repeat(2, 1fr) !important;
+						gap: 2rem !important;
+						padding: 2rem !important;
+					}
+					.no-print { display: none !important; }
+				}
+				.print-only { display: none; }
+				@media print { .print-only { display: block; } }
+			`}</style>
+
+			<div className="print-only print-section">
+				{tables.map((table) => (
+					<div
+						key={table.id}
+						style={{
+							textAlign: 'center',
+							padding: '1rem',
+							border: '1px solid #eee',
+							borderRadius: '12px',
+							pageBreakInside: 'avoid',
+						}}
+					>
+						<h2 style={{ marginBottom: '0.5rem' }}>
+							Table {table.tableNumber}
+						</h2>
+						<div
+							style={{
+								padding: '0.5rem',
+								background: '#fff',
+								display: 'inline-block',
+							}}
+						>
+							<QRCodeSVG
+								value={`${appUrl}/table/${table.id}?token=${table.qrData}`}
+								size={180}
+							/>
+						</div>
+						<p style={{ fontSize: '0.75rem', marginTop: '0.5rem' }}>
+							Chiya & Puff Ordering
+						</p>
+					</div>
+				))}
+			</div>
 			<ToastContainer
 				toasts={toasts}
 				dismiss={dismiss}
@@ -136,25 +190,34 @@ export default function AdminTablesPage() {
 						customers can order.
 					</p>
 				</div>
-				<button
-					onClick={() => setShowAddModal(true)}
-					style={{
-						background: 'var(--primary)',
-						color: '#fff',
-						border: 'none',
-						borderRadius: '10px',
-						padding: '0.65rem 1.25rem',
-						fontWeight: 600,
-						cursor: 'pointer',
-						display: 'flex',
-						alignItems: 'center',
-						gap: '0.5rem',
-						fontSize: '0.9rem',
-					}}
-				>
-					<PlusCircle size={16} />
-					Add Table
-				</button>
+				<div style={{ display: 'flex', gap: '0.75rem' }}>
+					<button
+						onClick={() => window.print()}
+						className="btn btn-secondary"
+						style={{ padding: '0.65rem 1.25rem', fontSize: '0.9rem' }}
+					>
+						Print All QR
+					</button>
+					<button
+						onClick={() => setShowAddModal(true)}
+						style={{
+							background: 'var(--primary)',
+							color: '#fff',
+							border: 'none',
+							borderRadius: '10px',
+							padding: '0.65rem 1.25rem',
+							fontWeight: 600,
+							cursor: 'pointer',
+							display: 'flex',
+							alignItems: 'center',
+							gap: '0.5rem',
+							fontSize: '0.9rem',
+						}}
+					>
+						<PlusCircle size={16} />
+						Add Table
+					</button>
+				</div>
 			</div>
 
 			{/* How it works banner */}

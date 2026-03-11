@@ -9,7 +9,7 @@ export async function verifyAuth(token: string) {
     try {
         const verified = await jwtVerify(token, getJwtSecretKey());
         return verified.payload;
-    } catch (err) {
+    } catch {
         throw new Error('Your token has expired.');
     }
 }

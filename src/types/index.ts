@@ -1,8 +1,12 @@
 // Shared TypeScript types across the application
 
-export type UserRole = 'ADMIN' | 'WAITER';
+export type UserRole = 'ADMIN' | 'WAITER' | 'CHEF';
 
-export type TableStatus = 'AVAILABLE' | 'OCCUPIED' | 'NEEDS_SERVICE';
+export type TableStatus =
+	| 'AVAILABLE'
+	| 'OCCUPIED'
+	| 'NEEDS_SERVICE'
+	| 'BILL_REQUESTED';
 
 export type OrderStatus = 'PENDING' | 'PREPARING' | 'DELIVERED' | 'BILLED';
 

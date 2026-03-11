@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 
@@ -32,6 +33,21 @@ async function main() {
             }
         });
         console.log('Created waiter account: waiter1 / waiter123');
+    }
+
+    const chefName = 'chef';
+    const existingChef = await prisma.user.findFirst({ where: { name: chefName } });
+
+    if (!existingChef) {
+        const password = await bcrypt.hash('chef123', 10);
+        await prisma.user.create({
+            data: {
+                name: chefName,
+                password,
+                role: 'CHEF'
+            }
+        });
+        console.log('Created chef account: chef / chef123');
     }
     // Seed Nepalese Menu Items
     const existingMenu = await prisma.menuItem.count();

@@ -14,8 +14,11 @@ export async function proxy(req: NextRequest) {
 				if (payload.role === 'ADMIN') {
 					return NextResponse.redirect(new URL('/admin', req.url));
 				}
+				if (payload.role === 'CHEF') {
+					return NextResponse.redirect(new URL('/kitchen', req.url));
+				}
 				return NextResponse.redirect(new URL('/waiter', req.url));
-			} catch (err) {
+			} catch {
 				// Token invalid, allow them to login
 			}
 		}
@@ -25,7 +28,8 @@ export async function proxy(req: NextRequest) {
 	// Protected routes
 	if (
 		req.nextUrl.pathname.startsWith('/admin') ||
-		req.nextUrl.pathname.startsWith('/waiter')
+		req.nextUrl.pathname.startsWith('/waiter') ||
+		req.nextUrl.pathname.startsWith('/kitchen')
 	) {
 		if (!token) {
 			return NextResponse.redirect(new URL('/login', req.url));
@@ -38,18 +42,27 @@ export async function proxy(req: NextRequest) {
 				req.nextUrl.pathname.startsWith('/admin') &&
 				payload.role !== 'ADMIN'
 			) {
+				if (payload.role === 'CHEF') return NextResponse.redirect(new URL('/kitchen', req.url));
 				return NextResponse.redirect(new URL('/waiter', req.url));
 			}
+
+			if (
+				req.nextUrl.pathname.startsWith('/kitchen') &&
+				payload.role !== 'CHEF' && payload.role !== 'ADMIN'
+			) {
+				return NextResponse.redirect(new URL('/waiter', req.url));
+			}
+
 			if (
 				req.nextUrl.pathname.startsWith('/waiter') &&
-				payload.role === 'ADMIN'
+				(payload.role === 'ADMIN' || payload.role === 'CHEF')
 			) {
-				// Optionally admins can view waiter page, but let's redirect them to admin for simplicity
-				return NextResponse.redirect(new URL('/admin', req.url));
+				if (payload.role === 'ADMIN') return NextResponse.redirect(new URL('/admin', req.url));
+				return NextResponse.redirect(new URL('/kitchen', req.url));
 			}
 
 			return NextResponse.next();
-		} catch (err) {
+		} catch {
 			// Invalid token
 			return NextResponse.redirect(new URL('/login', req.url));
 		}
@@ -59,5 +72,5 @@ export async function proxy(req: NextRequest) {
 }
 
 export const config = {
-	matcher: ['/admin/:path*', '/waiter/:path*', '/login'],
+	matcher: ['/admin/:path*', '/waiter/:path*', '/kitchen/:path*', '/login'],
 };

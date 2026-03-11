@@ -1,0 +1,227 @@
+.pageWrapper {
+  display: block;
+  min-height: 100vh;
+}
+
+.blob1 {
+  position: fixed;
+  top: -10%;
+  right: -5%;
+  width: 400px;
+  height: 400px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 90, 95, 0.12) 0%, transparent 60%);
+  filter: blur(40px);
+  z-index: -1;
+  opacity: 0.6;
+}
+
+.blob2 {
+  position: fixed;
+  bottom: 15%;
+  left: -10%;
+  width: 500px;
+  height: 500px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 166, 153, 0.12) 0%, transparent 60%);
+  filter: blur(40px);
+  z-index: -1;
+  opacity: 0.6;
+}
+
+.header {
+  padding: 1rem 5%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--card-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.headerLogo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.logoIcon {
+  background: var(--primary);
+  color: white;
+  padding: 0.5rem;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.heroSection {
+  padding: 8rem 5% 6rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4rem;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.heroContent {
+  flex: 1 1 500px;
+}
+
+.heroTitle {
+  font-size: clamp(3rem, 7vw, 4.5rem);
+  line-height: 1;
+  margin-bottom: 2rem;
+  font-weight: 800;
+}
+
+.heroHighlight {
+  color: var(--primary);
+  display: block;
+}
+
+.heroSubtitle {
+  font-size: 1.25rem;
+  color: var(--text-muted);
+  margin-bottom: 3rem;
+  max-width: 550px;
+  line-height: 1.6;
+}
+
+.heroActions {
+  display: flex;
+  gap: 1.25rem;
+}
+
+.terminalWrapper {
+  flex: 1 1 400px;
+  display: flex;
+  justify-content: center;
+}
+
+.section {
+  padding: 6rem 5%;
+}
+
+.aboutContent {
+  max-width: 900px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.iconWrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 166, 153, 0.1);
+  color: var(--secondary);
+  padding: 1.25rem;
+  border-radius: 50%;
+  margin-bottom: 2rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2.5rem;
+  max-width: 1200px;
+  margin: 4rem auto 0;
+}
+
+.featureCard {
+  padding: 2.5rem;
+  text-align: center;
+}
+
+.menuHeader {
+  text-align: center;
+  margin-bottom: 5rem;
+}
+
+.categorySection {
+  margin-bottom: 5rem;
+}
+
+.categoryTitle {
+  font-size: 1.75rem;
+  margin-bottom: 2.5rem;
+  color: var(--text-main);
+  border-bottom: 3px solid var(--primary);
+  padding-bottom: 0.5rem;
+  display: inline-block;
+}
+
+.menuGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 2rem;
+}
+
+.menuCard {
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.menuCardTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.itemName {
+  font-size: 1.25rem;
+  margin: 0;
+  font-weight: 700;
+}
+
+.itemPrice {
+  font-weight: 800;
+  color: var(--primary);
+  font-size: 1.125rem;
+}
+
+.itemDescription {
+  color: var(--text-muted);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.footer {
+  padding: 4rem 5%;
+  text-align: center;
+  background: var(--card-bg);
+  border-top: 1px solid var(--border-color);
+  margin-top: auto;
+}
+
+.footerLogo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  color: var(--text-main);
+  font-weight: 700;
+}
+
+.copy {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  margin: 0;
+}

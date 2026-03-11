@@ -48,8 +48,8 @@ export async function POST(request: NextRequest) {
 		// Actually, usually placing a new order creates a new record or appends.
 		// Let's create a new order, or if one is UNBILLED just append. For simplicity, create a new separate Order.
 
-		// Update table status to occupied if it was available
-		if (table.status === 'AVAILABLE') {
+		// Ensure a new order clears any transient request state on the table.
+		if (table.status !== 'OCCUPIED') {
 			await prisma.table.update({
 				where: { id: tableId },
 				data: { status: 'OCCUPIED' },
@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
 			},
 		});
 		return NextResponse.json(orders);
-	} catch (error) {
+	} catch {
 		return NextResponse.json({ error: 'Failed' }, { status: 500 });
 	}
 }

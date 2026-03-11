@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Table not found' }, { status: 404 });
         }
         return NextResponse.json({ id: table.id, qrData: table.qrData });
-    } catch (error) {
+    } catch {
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }

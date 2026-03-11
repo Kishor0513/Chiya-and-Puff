@@ -1,3 +1,4 @@
+import { verifyAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
@@ -12,17 +13,50 @@ export async function PATCH(
 		const token = request.cookies.get('auth-token')?.value;
 		if (!token)
 			return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-		// Any logged in staff can update orders
+
+		const payload = await verifyAuth(token);
+		const role = String(payload.role || '');
 
 		const { status } = await request.json();
+		const nextStatus = String(status || '');
+
+		const existingOrder = await prisma.order.findUnique({ where: { id } });
+		if (!existingOrder) {
+			return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+		}
+
+		const canBill = nextStatus === 'BILLED';
+		const waiterAllowed =
+			(existingOrder.status === 'PENDING' && nextStatus === 'PREPARING') ||
+			canBill;
+		const chefAllowed =
+			existingOrder.status === 'PREPARING' && nextStatus === 'DELIVERED';
+
+		if (role === 'WAITER' && !waiterAllowed) {
+			return NextResponse.json(
+				{ error: 'Waiter can only mark PENDING as PREPARING or bill orders.' },
+				{ status: 403 },
+			);
+		}
+
+		if (role === 'CHEF' && !chefAllowed) {
+			return NextResponse.json(
+				{ error: 'Chef can only mark PREPARING orders as DELIVERED.' },
+				{ status: 403 },
+			);
+		}
+
+		if (role !== 'ADMIN' && role !== 'WAITER' && role !== 'CHEF') {
+			return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+		}
 
 		const order = await prisma.order.update({
 			where: { id },
-			data: { status },
+			data: { status: nextStatus },
 		});
 
 		// If order is billed, check if table has other unbilled orders. If not, table becomes AVAILABLE
-		if (status === 'BILLED') {
+		if (nextStatus === 'BILLED') {
 			const activeOrders = await prisma.order.count({
 				where: {
 					tableId: order.tableId,
@@ -38,7 +72,7 @@ export async function PATCH(
 		}
 
 		return NextResponse.json(order);
-	} catch (error) {
+	} catch {
 		return NextResponse.json(
 			{ error: 'Failed to update order' },
 			{ status: 500 },

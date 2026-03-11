@@ -1,12 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { UtensilsCrossed, Lock, User } from 'lucide-react';
 import Link from 'next/link';
 
 export default function LoginPage() {
-    const router = useRouter();
     const [name, setName] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -35,8 +33,8 @@ export default function LoginPage() {
             } else {
                 window.location.href = '/waiter';
             }
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : 'An error occurred');
         } finally {
             setLoading(false);
         }

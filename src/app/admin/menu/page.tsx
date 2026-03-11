@@ -11,6 +11,7 @@ type MenuItem = {
 	price: number;
 	category: string;
 	available: boolean;
+	imageUrl?: string;
 };
 
 export default function MenuManagement() {
@@ -25,9 +26,38 @@ export default function MenuManagement() {
 		price: '',
 		category: 'Drinks',
 		available: true,
+		imageUrl: '',
 	});
+	const [uploading, setUploading] = useState(false);
 	const [isEditing, setIsEditing] = useState(false);
 	const { toasts, toast, dismiss } = useToast();
+
+	const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+		const file = e.target.files?.[0];
+		if (!file) return;
+
+		setUploading(true);
+		const data = new FormData();
+		data.append('file', file);
+
+		try {
+			const res = await fetch('/api/upload', {
+				method: 'POST',
+				body: data,
+			});
+			if (res.ok) {
+				const { url } = await res.json();
+				setFormData((prev) => ({ ...prev, imageUrl: url }));
+				toast('Image uploaded successfully', 'success');
+			} else {
+				toast('Upload failed', 'error');
+			}
+		} catch {
+			toast('Upload error', 'error');
+		} finally {
+			setUploading(false);
+		}
+	};
 
 	useEffect(() => {
 		fetchItems();
@@ -60,6 +90,7 @@ export default function MenuManagement() {
 				price: Number(formData.price),
 				category: formData.category,
 				available: formData.available,
+				imageUrl: formData.imageUrl,
 			};
 
 			const res = await fetch(url, {
@@ -109,6 +140,7 @@ export default function MenuManagement() {
 			price: '',
 			category: 'Drinks',
 			available: true,
+			imageUrl: '',
 		});
 		setShowModal(true);
 	};
@@ -122,6 +154,7 @@ export default function MenuManagement() {
 			price: String(item.price),
 			category: item.category,
 			available: item.available,
+			imageUrl: item.imageUrl || '',
 		});
 		setShowModal(true);
 	};
@@ -334,6 +367,53 @@ export default function MenuManagement() {
 							onSubmit={handleSave}
 							style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}
 						>
+              <div>
+								<label
+									style={{
+										display: 'block',
+										marginBottom: '0.5rem',
+										fontSize: '0.875rem',
+										fontWeight: 500,
+									}}
+								>
+									Dish Image
+								</label>
+                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                  {formData.imageUrl && (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img 
+                      src={formData.imageUrl} 
+                      alt="Preview" 
+                      style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'cover', border: '1px solid var(--border-color)' }} 
+                    />
+                  )}
+                  <div style={{ flex: 1, position: 'relative' }}>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileUpload}
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        opacity: 0,
+                        cursor: 'pointer',
+                        width: '100%'
+                      }}
+                    />
+                    <div style={{
+                      padding: '0.75rem',
+                      border: '2px dashed var(--border-color)',
+                      borderRadius: '8px',
+                      textAlign: 'center',
+                      fontSize: '0.875rem',
+                      color: 'var(--text-secondary)',
+                      background: 'var(--glass)'
+                    }}>
+                      {uploading ? 'Uploading...' : 'Click to upload image'}
+                    </div>
+                  </div>
+                </div>
+              </div>
 							<div>
 								<label
 									style={{
@@ -439,7 +519,7 @@ export default function MenuManagement() {
 											borderRadius: '8px',
 											border: '1px solid var(--border-color)',
 											outline: 'none',
-											background: 'white',
+											background: 'var(--card-bg)',
 										}}
 									>
 										<option value="Starters">Starters</option>

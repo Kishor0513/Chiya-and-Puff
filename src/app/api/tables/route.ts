@@ -25,7 +25,12 @@ export async function PATCH(request: NextRequest) {
 			);
 		}
 
-		const validStatuses = ['AVAILABLE', 'OCCUPIED', 'NEEDS_SERVICE'];
+		const validStatuses = [
+			'AVAILABLE',
+			'OCCUPIED',
+			'NEEDS_SERVICE',
+			'BILL_REQUESTED',
+		];
 		const newStatus = validStatuses.includes(status) ? status : 'NEEDS_SERVICE';
 
 		const updated = await prisma.table.update({
@@ -43,7 +48,7 @@ export async function PATCH(request: NextRequest) {
 	}
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
 	try {
 		const tables = await prisma.table.findMany({
 			orderBy: { tableNumber: 'asc' },
@@ -56,6 +61,7 @@ export async function GET(request: NextRequest) {
 		});
 		return NextResponse.json(tables);
 	} catch (error) {
+		console.error('GET /api/tables', error);
 		return NextResponse.json(
 			{ error: 'Failed to fetch tables' },
 			{ status: 500 },
@@ -89,12 +95,19 @@ export async function POST(request: NextRequest) {
 		});
 
 		return NextResponse.json(table);
-	} catch (error: any) {
-		if (error.code === 'P2002')
+	} catch (error: unknown) {
+		if (
+			typeof error === 'object' &&
+			error !== null &&
+			'code' in error &&
+			error.code === 'P2002'
+		)
 			return NextResponse.json(
 				{ error: 'Table number already exists' },
 				{ status: 400 },
 			);
+
+		console.error('POST /api/tables', error);
 		return NextResponse.json(
 			{ error: 'Failed to create table' },
 			{ status: 500 },

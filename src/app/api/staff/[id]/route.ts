@@ -24,7 +24,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
         });
 
         return NextResponse.json({ success: true });
-    } catch (error) {
+    } catch {
         return NextResponse.json({ error: 'Failed to delete staff member' }, { status: 500 });
     }
 }

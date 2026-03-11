@@ -20,30 +20,7 @@ const STATUS_COLOR: Record<OrderStatus, string> = {
 	BILLED: '#9B59B6',
 };
 
-function SkeletonCard() {
-	return (
-		<div
-			className="glass-panel"
-			style={{
-				padding: '1.5rem',
-				height: '130px',
-				overflow: 'hidden',
-				position: 'relative',
-			}}
-		>
-			<div
-				style={{
-					height: '100%',
-					backgroundImage:
-						'linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.06) 50%, transparent 100%)',
-					backgroundSize: '200% 100%',
-					animation: 'shimmer 1.5s infinite',
-				}}
-			/>
-			<style>{`@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}`}</style>
-		</div>
-	);
-}
+import { SkeletonCard } from '@/components/ui/Skeleton';
 
 export default function AdminDashboard() {
 	const [stats, setStats] = useState<AdminStats | null>(null);
@@ -120,6 +97,7 @@ export default function AdminDashboard() {
 	const quickActions = [
 		{ label: 'Manage Menu', href: '/admin/menu', color: 'var(--primary)' },
 		{ label: 'Tables & QR', href: '/admin/tables', color: '#4A90E2' },
+		{ label: 'Analytics', href: '/admin/analytics', color: '#00A699' },
 		{ label: 'Manage Staff', href: '/admin/staff', color: 'var(--secondary)' },
 		{ label: 'Settings', href: '/admin/settings', color: '#9B59B6' },
 	];

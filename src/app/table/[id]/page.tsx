@@ -11,8 +11,10 @@ import {
 	Minus,
 	PartyPopper,
 	Plus,
+	Printer,
 	Receipt,
 	Search,
+	Share2,
 	ShoppingCart,
 	Utensils,
 	X,
@@ -73,6 +75,7 @@ export default function CustomerMenuPage() {
 	const [showPayment, setShowPayment] = useState(false);
 	const [paymentMethod, setPaymentMethod] = useState<PayMethod>('cash');
 	const [tablePaid, setTablePaid] = useState(false);
+	const [paymentConfirmed, setPaymentConfirmed] = useState(false);
 	const hadBilledRef = useRef(false);
 	const { toasts, toast, dismiss } = useToast();
 
@@ -82,7 +85,7 @@ export default function CustomerMenuPage() {
 			.then((data: MenuItem[]) => setMenuItems(data.filter((m) => m.available)))
 			.catch(() => toast('Failed to load menu', 'error'))
 			.finally(() => setMenuLoading(false));
-	}, []);
+	}, [toast]);
 
 	const resetSession = useCallback(() => {
 		setOrders([]);
@@ -90,6 +93,7 @@ export default function CustomerMenuPage() {
 		setShowPayment(false);
 		setTab('menu');
 		setTablePaid(false);
+		setPaymentConfirmed(false);
 		hadBilledRef.current = false;
 	}, []);
 
@@ -101,7 +105,7 @@ export default function CustomerMenuPage() {
 				// If waiter cleared the table (marked AVAILABLE), all orders vanish
 				if (data.length === 0 && hadBilledRef.current) {
 					resetSession();
-					toast('Table cleared — welcome!', 'success');
+					setTablePaid(true);
 					return;
 				}
 				// On fresh page load (new QR scan), ignore stale BILLED orders
@@ -128,7 +132,9 @@ export default function CustomerMenuPage() {
 	const activeOrders = orders.filter((o) => o.status !== 'BILLED');
 	const billedOrders = orders.filter((o) => o.status === 'BILLED');
 	const orderTotal = activeOrders.reduce((sum, o) => sum + o.totalAmount, 0);
-	const billedTotal = orders.reduce((sum, o) => sum + o.totalAmount, 0);
+	const hasBilledOrders = billedOrders.length > 0;
+	const payableOrders = hasBilledOrders ? billedOrders : activeOrders;
+	const payableTotal = payableOrders.reduce((sum, o) => sum + o.totalAmount, 0);
 
 	// Auto-show payment modal when waiter delivers the bill
 	useEffect(() => {
@@ -139,7 +145,7 @@ export default function CustomerMenuPage() {
 				setTab('orders');
 			}
 		}
-	}, [billedOrders.length]); // eslint-disable-line react-hooks/exhaustive-deps
+	}, [billedOrders.length, showPayment, toast]);
 
 	const updateCart = (item: MenuItem, delta: number) => {
 		setCart((prev) => {
@@ -220,6 +226,115 @@ export default function CustomerMenuPage() {
 			else toast('Could not signal waiter. Please try again.', 'error');
 		} catch {
 			toast('Network error', 'error');
+		}
+	};
+
+	const handleRequestBill = async () => {
+		try {
+			const res = await fetch('/api/tables', {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ tableId: id, token, status: 'BILL_REQUESTED' }),
+			});
+			if (res.ok) {
+				toast('Bill request sent to waiter', 'success');
+				setShowPayment(true);
+			} else {
+				toast('Could not request bill. Please try again.', 'error');
+			}
+		} catch {
+			toast('Network error', 'error');
+		}
+	};
+
+	const handlePrint = () => {
+		const allItems = payableOrders.flatMap((o) => o.items ?? []);
+		const now = new Date().toLocaleString('en-NP', {
+			dateStyle: 'medium',
+			timeStyle: 'short',
+		});
+		const itemRows = allItems
+			.map(
+				(item) =>
+					`<tr><td>${item.quantity}&times; ${item.menuItem?.name ?? ''}</td>` +
+					`<td style="text-align:right">Rs. ${item.subTotal}</td></tr>`,
+			)
+			.join('');
+		const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Receipt — Chiya &amp; Puff</title>
+  <style>
+    body { font-family: 'Courier New', monospace; max-width: 320px; margin: 0 auto; padding: 1rem 1.25rem; font-size: 13px; color: #111; }
+    h1 { text-align: center; font-size: 1.25rem; margin: 0 0 2px; letter-spacing: 0.05em; }
+    .sub { text-align: center; color: #555; font-size: 11px; margin: 1px 0; }
+    table { width: 100%; border-collapse: collapse; margin: 0.4rem 0; }
+    td { padding: 2px 0; vertical-align: top; }
+    td:last-child { white-space: nowrap; }
+    .divider { border: none; border-top: 1px dashed #aaa; margin: 6px 0; }
+    .total-row td { font-weight: bold; font-size: 1rem; padding-top: 4px; }
+    .footer { text-align: center; color: #555; font-size: 11px; margin-top: 6px; }
+    @media print { body { margin: 0; } button { display: none; } }
+  </style>
+</head>
+<body>
+  <h1>CHIYA &amp; PUFF</h1>
+  <p class="sub">Kathmandu, Nepal</p>
+  <p class="sub">Table #${id.slice(-4).toUpperCase()} &mdash; ${now}</p>
+  <hr class="divider" />
+  <table>${itemRows}</table>
+  <hr class="divider" />
+  <table><tr class="total-row"><td>TOTAL</td><td style="text-align:right">Rs. ${payableTotal.toLocaleString()}</td></tr></table>
+  <hr class="divider" />
+  <p class="footer">Payment: ${paymentMethod.toUpperCase()}</p>
+  <p class="footer">Thank you for dining with us!</p>
+  <p class="footer">Come back soon &#x1F64F;</p>
+  <script>window.onload = function() { window.print(); }</script>
+</body>
+</html>`;
+		const w = window.open('', '_blank', 'width=400,height=620');
+		if (!w) {
+			toast('Allow pop-ups in your browser to print the receipt', 'error');
+			return;
+		}
+		w.document.write(html);
+		w.document.close();
+	};
+
+	const handleShare = async () => {
+		const allItems = payableOrders.flatMap((o) => o.items ?? []);
+		const now = new Date().toLocaleString();
+		const lines = allItems.map(
+			(item) =>
+				`${item.quantity}x ${item.menuItem?.name ?? ''} — Rs. ${item.subTotal}`,
+		);
+		const text = [
+			'🍵 CHIYA & PUFF — BILL',
+			`Table #${id.slice(-4).toUpperCase()}`,
+			`Date: ${now}`,
+			'─────────────────────────',
+			...lines,
+			'─────────────────────────',
+			`TOTAL: Rs. ${payableTotal.toLocaleString()}`,
+			`Payment: ${paymentMethod.toUpperCase()}`,
+			'',
+			'Thank you for dining with us! 🙏',
+		].join('\n');
+		try {
+			if (navigator.share) {
+				await navigator.share({ title: 'Bill — Chiya & Puff', text });
+			} else {
+				await navigator.clipboard.writeText(text);
+				toast('Bill copied to clipboard!', 'success');
+			}
+		} catch {
+			try {
+				await navigator.clipboard.writeText(text);
+				toast('Bill copied to clipboard!', 'success');
+			} catch {
+				toast('Could not share bill', 'error');
+			}
 		}
 	};
 
@@ -702,7 +817,28 @@ export default function CustomerMenuPage() {
 								</span>{' '}
 								Status updates live every 8 seconds
 							</div>
-							{billedOrders.length > 0 && (
+							{paymentConfirmed && (
+								<div
+									style={{
+										background: '#27AE6015',
+										border: '1.5px solid #27AE6050',
+										borderRadius: '12px',
+										padding: '0.85rem 1rem',
+										display: 'flex',
+										alignItems: 'center',
+										gap: '0.6rem',
+										fontSize: '0.88rem',
+										fontWeight: 600,
+										color: '#27AE60',
+										marginBottom: '0.25rem',
+									}}
+								>
+									<span style={{ fontSize: '1.1rem' }}>✓</span>
+									Payment confirmed — enjoy your meal! Your orders are still
+									being tracked below.
+								</div>
+							)}
+							{payableTotal > 0 && (
 								<button
 									onClick={() => setShowPayment(true)}
 									style={{
@@ -722,8 +858,12 @@ export default function CustomerMenuPage() {
 										marginBottom: '0.75rem',
 									}}
 								>
-									<Receipt size={18} /> View Bill &amp; Pay — Rs.{' '}
-									{billedTotal.toLocaleString()}
+									<Receipt size={18} />
+									{hasBilledOrders
+										? 'View Final Bill & Pay'
+										: 'View Bill & Payment Options'}
+									{' — Rs. '}
+									{payableTotal.toLocaleString()}
 								</button>
 							)}
 							{activeOrders.map((order) => {
@@ -992,7 +1132,7 @@ export default function CustomerMenuPage() {
 										</span>
 									</div>
 									<button
-										onClick={handleCallWaiter}
+										onClick={handleRequestBill}
 										style={{
 											width: '100%',
 											marginTop: '0.85rem',
@@ -1006,7 +1146,7 @@ export default function CustomerMenuPage() {
 											fontSize: '0.95rem',
 										}}
 									>
-										Request Bill
+										Request Bill from Waiter
 									</button>
 								</div>
 							)}
@@ -1050,7 +1190,7 @@ export default function CustomerMenuPage() {
 								/>
 							</div>
 							<h2 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 700 }}>
-								Your Bill is Ready!
+								{hasBilledOrders ? 'Your Bill is Ready!' : 'Bill Preview'}
 							</h2>
 							<p
 								style={{
@@ -1059,71 +1199,239 @@ export default function CustomerMenuPage() {
 									fontSize: '0.85rem',
 								}}
 							>
-								Choose how you&apos;d like to pay
+								{hasBilledOrders
+									? 'Choose how you would like to pay'
+									: 'You can request the waiter and choose payment in advance'}
 							</p>
 						</div>
 
-						{/* Bill Breakdown */}
-						<div
-							style={{
-								background: 'var(--bg)',
-								borderRadius: '12px',
-								padding: '1rem',
-								marginBottom: '1.25rem',
-							}}
-						>
-							{orders.map((o) => (
-								<div key={o.id}>
+						{/* Receipt-style Bill (when formally billed) */}
+						{hasBilledOrders ? (
+							<div
+								style={{
+									background: 'var(--bg)',
+									border: '1.5px dashed var(--glass-border)',
+									borderRadius: '12px',
+									padding: '1.1rem 1.25rem',
+									marginBottom: '1.25rem',
+									fontFamily: "'Courier New', monospace",
+								}}
+							>
+								{/* Receipt header */}
+								<div style={{ textAlign: 'center', marginBottom: '0.6rem' }}>
 									<div
 										style={{
-											display: 'flex',
-											justifyContent: 'space-between',
-											fontWeight: 600,
-											fontSize: '0.8rem',
-											color: 'var(--text-secondary)',
-											padding: '0.25rem 0',
+											fontWeight: 800,
+											fontSize: '1.1rem',
+											letterSpacing: '0.05em',
 										}}
 									>
-										<span>Order #{o.id.slice(-6).toUpperCase()}</span>
-										<span>Rs. {o.totalAmount.toLocaleString()}</span>
+										CHIYA &amp; PUFF
 									</div>
-									{o.items?.map((item) => (
+									<div
+										style={{
+											fontSize: '0.7rem',
+											color: 'var(--text-secondary)',
+											marginTop: '2px',
+										}}
+									>
+										Kathmandu, Nepal
+									</div>
+									<div
+										style={{
+											fontSize: '0.7rem',
+											color: 'var(--text-secondary)',
+											marginTop: '2px',
+										}}
+									>
+										Table #{id.slice(-4).toUpperCase()} &mdash;{' '}
+										{new Date().toLocaleString('en-NP', {
+											dateStyle: 'medium',
+											timeStyle: 'short',
+										})}
+									</div>
+								</div>
+								{/* Dashed divider */}
+								<div
+									style={{
+										borderTop: '1px dashed var(--glass-border)',
+										margin: '0.5rem 0',
+									}}
+								/>
+								{/* All items flat list */}
+								{payableOrders
+									.flatMap((o) => o.items ?? [])
+									.map((item) => (
 										<div
 											key={item.id}
 											style={{
 												display: 'flex',
 												justifyContent: 'space-between',
-												fontSize: '0.78rem',
-												color: 'var(--text-secondary)',
-												paddingLeft: '0.75rem',
-												padding: '0.1rem 0 0.1rem 0.75rem',
+												fontSize: '0.8rem',
+												padding: '0.15rem 0',
 											}}
 										>
 											<span>
-												{item.quantity}&times; {item.menuItem?.name}
+												{item.quantity}&times;&nbsp;{item.menuItem?.name}
 											</span>
-											<span>Rs. {item.subTotal}</span>
+											<span
+												style={{ whiteSpace: 'nowrap', paddingLeft: '1rem' }}
+											>
+												Rs. {item.subTotal}
+											</span>
 										</div>
 									))}
+								{/* Divider */}
+								<div
+									style={{
+										borderTop: '1px dashed var(--glass-border)',
+										margin: '0.5rem 0',
+									}}
+								/>
+								{/* Total */}
+								<div
+									style={{
+										display: 'flex',
+										justifyContent: 'space-between',
+										fontWeight: 800,
+										fontSize: '1rem',
+									}}
+								>
+									<span>TOTAL</span>
+									<span style={{ color: '#9B59B6' }}>
+										Rs. {payableTotal.toLocaleString()}
+									</span>
 								</div>
-							))}
+								{/* Divider */}
+								<div
+									style={{
+										borderTop: '1px dashed var(--glass-border)',
+										margin: '0.5rem 0',
+									}}
+								/>
+								<div
+									style={{
+										textAlign: 'center',
+										fontSize: '0.7rem',
+										color: 'var(--text-secondary)',
+									}}
+								>
+									Thank you for dining with us! 🙏
+								</div>
+								{/* Print & Share */}
+								<div
+									style={{
+										display: 'flex',
+										gap: '0.6rem',
+										marginTop: '0.85rem',
+									}}
+								>
+									<button
+										type="button"
+										onClick={handlePrint}
+										style={{
+											flex: 1,
+											display: 'flex',
+											alignItems: 'center',
+											justifyContent: 'center',
+											gap: '0.4rem',
+											background: '#4A90E220',
+											color: '#4A90E2',
+											border: '1px solid #4A90E240',
+											borderRadius: '8px',
+											padding: '0.55rem 0.5rem',
+											cursor: 'pointer',
+											fontWeight: 600,
+											fontSize: '0.8rem',
+										}}
+									>
+										<Printer size={14} /> Print
+									</button>
+									<button
+										type="button"
+										onClick={handleShare}
+										style={{
+											flex: 1,
+											display: 'flex',
+											alignItems: 'center',
+											justifyContent: 'center',
+											gap: '0.4rem',
+											background: '#27AE6020',
+											color: '#27AE60',
+											border: '1px solid #27AE6040',
+											borderRadius: '8px',
+											padding: '0.55rem 0.5rem',
+											cursor: 'pointer',
+											fontWeight: 600,
+											fontSize: '0.8rem',
+										}}
+									>
+										<Share2 size={14} /> Share
+									</button>
+								</div>
+							</div>
+						) : (
+							/* Bill Preview (before formal billing) */
 							<div
 								style={{
-									display: 'flex',
-									justifyContent: 'space-between',
-									fontWeight: 700,
-									fontSize: '1.1rem',
-									marginTop: '0.75rem',
-									paddingTop: '0.75rem',
-									borderTop: '2px solid var(--glass-border)',
+									background: 'var(--bg)',
+									borderRadius: '12px',
+									padding: '1rem',
+									marginBottom: '1.25rem',
 								}}
 							>
-								<span>Total</span>
-								<span style={{ color: '#9B59B6' }}>
-									Rs. {billedTotal.toLocaleString()}
-								</span>
+								{payableOrders.map((o) => (
+									<div key={o.id}>
+										<div
+											style={{
+												display: 'flex',
+												justifyContent: 'space-between',
+												fontWeight: 600,
+												fontSize: '0.8rem',
+												color: 'var(--text-secondary)',
+												padding: '0.25rem 0',
+											}}
+										>
+											<span>Order #{o.id.slice(-6).toUpperCase()}</span>
+											<span>Rs. {o.totalAmount.toLocaleString()}</span>
+										</div>
+										{o.items?.map((item) => (
+											<div
+												key={item.id}
+												style={{
+													display: 'flex',
+													justifyContent: 'space-between',
+													fontSize: '0.78rem',
+													color: 'var(--text-secondary)',
+													padding: '0.1rem 0 0.1rem 0.75rem',
+												}}
+											>
+												<span>
+													{item.quantity}&times; {item.menuItem?.name}
+												</span>
+												<span>Rs. {item.subTotal}</span>
+											</div>
+										))}
+									</div>
+								))}
+								<div
+									style={{
+										display: 'flex',
+										justifyContent: 'space-between',
+										fontWeight: 700,
+										fontSize: '1.1rem',
+										marginTop: '0.75rem',
+										paddingTop: '0.75rem',
+										borderTop: '2px solid var(--glass-border)',
+									}}
+								>
+									<span>Total</span>
+									<span style={{ color: '#9B59B6' }}>
+										Rs. {payableTotal.toLocaleString()}
+									</span>
+								</div>
 							</div>
-						</div>
+						)}
 
 						{/* Payment Methods */}
 						<p
@@ -1241,7 +1549,7 @@ export default function CustomerMenuPage() {
 										color: '#27AE60',
 									}}
 								>
-									Pay Rs. {billedTotal.toLocaleString()} in Cash
+									Pay Rs. {payableTotal.toLocaleString()} in Cash
 								</div>
 								<div
 									style={{
@@ -1270,7 +1578,7 @@ export default function CustomerMenuPage() {
 									style={{ margin: '0 auto 0.5rem' }}
 								/>
 								<div style={{ fontWeight: 700, fontSize: '0.95rem' }}>
-									Scan to Pay Rs. {billedTotal.toLocaleString()}
+									Scan to Pay Rs. {payableTotal.toLocaleString()}
 								</div>
 								<div
 									style={{
@@ -1291,9 +1599,14 @@ export default function CustomerMenuPage() {
 						)}
 
 						<button
-							onClick={() => {
-								resetSession();
-								setTablePaid(true);
+							onClick={async () => {
+								if (hasBilledOrders) {
+									setShowPayment(false);
+									setPaymentConfirmed(true);
+									toast('Payment confirmed! Enjoy your time. 🙏', 'success');
+									return;
+								}
+								await handleRequestBill();
 							}}
 							style={{
 								width: '100%',
@@ -1307,7 +1620,26 @@ export default function CustomerMenuPage() {
 								cursor: 'pointer',
 							}}
 						>
-							Done — Thank You! 🙏
+							{hasBilledOrders
+								? 'Done - Thank You! 🙏'
+								: 'Request Waiter For Final Bill'}
+						</button>
+						<button
+							onClick={() => setShowPayment(false)}
+							style={{
+								width: '100%',
+								marginTop: '0.6rem',
+								background: 'transparent',
+								color: 'var(--text-secondary)',
+								border: '1px solid var(--glass-border)',
+								borderRadius: '12px',
+								padding: '0.75rem',
+								fontWeight: 600,
+								fontSize: '0.9rem',
+								cursor: 'pointer',
+							}}
+						>
+							Close
 						</button>
 					</div>
 				</div>

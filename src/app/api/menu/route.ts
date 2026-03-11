@@ -3,13 +3,13 @@ import { prisma } from '@/lib/prisma';
 import { verifyAuth } from '@/lib/auth';
 import type { NextRequest } from 'next/server';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
     try {
         const items = await prisma.menuItem.findMany({
             orderBy: { category: 'asc' }
         });
         return NextResponse.json(items);
-    } catch (error) {
+    } catch {
         return NextResponse.json({ error: 'Failed to fetch menu items' }, { status: 500 });
     }
 }

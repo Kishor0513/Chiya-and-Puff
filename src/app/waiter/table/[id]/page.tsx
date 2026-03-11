@@ -8,7 +8,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 const ORDER_STATUS_FLOW: Record<OrderStatus, OrderStatus | null> = {
 	PENDING: 'PREPARING',
-	PREPARING: 'DELIVERED',
+	PREPARING: null,
 	DELIVERED: 'BILLED',
 	BILLED: null,
 };
@@ -88,15 +88,15 @@ export default function WaiterTablePage() {
 	};
 
 	const handleBillAll = async () => {
-		const deliveredOrders = orders.filter((o) => o.status === 'DELIVERED');
-		if (deliveredOrders.length === 0) {
-			toast('No delivered orders to bill', 'info');
+		const billableOrders = orders.filter((o) => o.status !== 'BILLED');
+		if (billableOrders.length === 0) {
+			toast('No active orders to bill', 'info');
 			return;
 		}
 		setBillingAll(true);
 		try {
 			await Promise.all(
-				deliveredOrders.map((o) =>
+				billableOrders.map((o) =>
 					fetch(`/api/orders/${o.id}`, {
 						method: 'PATCH',
 						headers: { 'Content-Type': 'application/json' },
@@ -104,12 +104,10 @@ export default function WaiterTablePage() {
 					}),
 				),
 			);
-			const total = deliveredOrders.reduce((sum, o) => sum + o.totalAmount, 0);
+			const total = billableOrders.reduce((sum, o) => sum + o.totalAmount, 0);
 			setOrders((prev) =>
 				prev.map((o) =>
-					o.status === 'DELIVERED'
-						? { ...o, status: 'BILLED' as OrderStatus }
-						: o,
+					o.status !== 'BILLED' ? { ...o, status: 'BILLED' as OrderStatus } : o,
 				),
 			);
 			toast(`Bill generated! Total: Rs. ${total.toLocaleString()}`, 'success');
@@ -171,7 +169,7 @@ export default function WaiterTablePage() {
 
 	const activeOrders = orders.filter((o) => o.status !== 'BILLED');
 	const totalRevenue = orders
-		.filter((o) => o.status === 'DELIVERED')
+		.filter((o) => o.status !== 'BILLED')
 		.reduce((sum, o) => sum + o.totalAmount, 0);
 
 	return (
@@ -210,15 +208,19 @@ export default function WaiterTablePage() {
 						background:
 							table.status === 'NEEDS_SERVICE'
 								? '#FF5A5F20'
-								: table.status === 'OCCUPIED'
-									? '#F5A62320'
-									: '#00A69920',
+								: table.status === 'BILL_REQUESTED'
+									? '#9B59B620'
+									: table.status === 'OCCUPIED'
+										? '#F5A62320'
+										: '#00A69920',
 						color:
 							table.status === 'NEEDS_SERVICE'
 								? '#FF5A5F'
-								: table.status === 'OCCUPIED'
-									? '#F5A623'
-									: '#00A699',
+								: table.status === 'BILL_REQUESTED'
+									? '#9B59B6'
+									: table.status === 'OCCUPIED'
+										? '#F5A623'
+										: '#00A699',
 						borderRadius: '20px',
 						padding: '0.25rem 0.75rem',
 						fontSize: '0.8rem',
@@ -260,7 +262,7 @@ export default function WaiterTablePage() {
 						<Receipt size={16} />
 						{billingAll
 							? 'Generating…'
-							: `Bill Delivered (Rs. ${totalRevenue.toLocaleString()})`}
+							: `Generate Bill (Rs. ${totalRevenue.toLocaleString()})`}
 					</button>
 				)}
 				<button
@@ -371,6 +373,17 @@ export default function WaiterTablePage() {
 													? '…'
 													: `Mark ${next.charAt(0) + next.slice(1).toLowerCase()}`}
 											</button>
+										)}
+										{order.status === 'PREPARING' && (
+											<span
+												style={{
+													fontSize: '0.75rem',
+													fontWeight: 600,
+													color: '#4A90E2',
+												}}
+											>
+												Waiting for kitchen to mark ready
+											</span>
 										)}
 									</div>
 								</div>

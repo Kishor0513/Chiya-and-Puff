@@ -1,12 +1,9 @@
 'use client';
 
 import {
-    UtensilsCrossed,
     LogOut,
     Coffee,
-    Menu
 } from 'lucide-react';
-import Link from 'next/link';
 
 export default function WaiterLayout({ children }: { children: React.ReactNode }) {
 

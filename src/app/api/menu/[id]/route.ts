@@ -25,13 +25,13 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
                 description: data.description,
                 price: data.price ? parseFloat(data.price) : undefined,
                 category: data.category,
-                imageUrl: data.imageUrl,
-                available: data.available
+                available: data.available,
+                imageUrl: data.imageUrl
             }
         });
 
         return NextResponse.json(item);
-    } catch (error) {
+    } catch {
         return NextResponse.json({ error: 'Failed to update menu item' }, { status: 500 });
     }
 }
@@ -53,7 +53,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
         });
 
         return NextResponse.json({ success: true });
-    } catch (error) {
+    } catch {
         return NextResponse.json({ error: 'Failed to delete menu item' }, { status: 500 });
     }
 }

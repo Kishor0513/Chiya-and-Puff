@@ -24,14 +24,15 @@
   --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0F0F13;
-    --card-bg: rgba(30, 30, 35, 0.65);
-    --text-main: #F7F7F9;
-    --text-muted: #9E9E9E;
-    --border-color: rgba(255, 255, 255, 0.08);
-  }
+[data-theme='dark'],
+.dark {
+  --background: #0B0B0E;
+  --card-bg: rgba(22, 22, 26, 0.7);
+  --text-main: #F7FBFF;
+  --text-muted: #A0AEC0;
+  --border-color: rgba(255, 255, 255, 0.1);
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.6);
 }
 
 * {
