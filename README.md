@@ -1,6 +1,8 @@
 # Chiya and Puff
 
-Chiya and Puff is a restaurant operations app for a Nepalese menu. It combines a public QR ordering flow with separate dashboards for admin, waiter, and kitchen staff.
+![Chiya and Puff Project Screenshot](./public/project-screenshot.png)
+
+Chiya and Puff is a restaurant operations app for a Nepalese menu. It combines a public QR ordering flow with separate dashboards for admin, waiter, and kitchen staff. Built with Next.js, Prisma, and PostgreSQL for a seamless experience.
 
 ## Features
 
