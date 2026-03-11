@@ -11,7 +11,7 @@ Chiya and Puff is a restaurant operations app for a Nepalese menu. It combines a
 - Admin dashboard for menu, tables, staff, and analytics.
 - Distinct table request types for service calls and bill requests.
 - Customer bill modal with receipt-style layout and print/share actions.
-- Prisma-backed data layer with a local SQLite database for development.
+- Prisma-backed data layer (PostgreSQL for production/Vercel).
 
 ## Operational Flow
 
@@ -28,7 +28,7 @@ Chiya and Puff is a restaurant operations app for a Nepalese menu. It combines a
 - Next.js 16 App Router
 - React 19
 - Prisma ORM
-- SQLite for local development
+- PostgreSQL (recommended for local + production)
 - JWT authentication with jose
 - bcryptjs for password hashing
 
@@ -51,7 +51,7 @@ npm install
 cp .env.example .env
 ```
 
-3. Generate Prisma Client, create the SQLite schema, and seed default data.
+3. Generate Prisma Client, push schema to your PostgreSQL database, and seed default data.
 
 ```bash
 npm run db:setup
@@ -89,9 +89,26 @@ The seed script creates these users if they do not already exist:
 
 ## Environment Notes
 
-- Local development uses SQLite configured in `prisma/schema.prisma`.
+- Set `DATABASE_URL` to your PostgreSQL connection string.
 - `JWT_SECRET` is optional in development but should be set explicitly outside local testing.
 - `NEXT_PUBLIC_APP_URL` is used when generating shareable table links from the waiter dashboard.
+
+## Deploying To Vercel
+
+1. Create a hosted PostgreSQL database (Neon/Supabase/Railway/etc.).
+2. In Vercel Project Settings -> Environment Variables, set:
+	- `DATABASE_URL`
+	- `JWT_SECRET`
+	- `NEXT_PUBLIC_APP_URL` (your Vercel URL)
+3. Deploy the project.
+4. After deploy, run database setup once (from local machine or CI):
+
+```bash
+npx prisma db push
+node prisma/seed.js
+```
+
+If `DATABASE_URL` is missing or invalid on Vercel, server components and API routes that read from Prisma can fail at runtime.
 
 ## Main Routes
 
