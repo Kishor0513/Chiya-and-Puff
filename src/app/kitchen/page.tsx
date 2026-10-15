@@ -115,6 +115,16 @@ export default function KitchenDashboard() {
 			</header>
 
 			<main className={styles.grid}>
+				{orders.length === 0 && (
+					<div
+						className={styles.orderCard}
+						style={{ padding: '2rem', textAlign: 'center', gridColumn: '1 / -1' }}
+					>
+						<p style={{ margin: 0, color: '#666' }}>
+							No active orders. New PENDING orders will appear here instantly.
+						</p>
+					</div>
+				)}
 				<AnimatePresence>
 					{orders.map((order) => (
 						<motion.div
@@ -156,6 +166,14 @@ export default function KitchenDashboard() {
 							</div>
 
 							<div className={styles.cardActions}>
+								{order.status === 'PENDING' && (
+									<div
+										className={styles.readyText}
+										style={{ color: '#B7791F' }}
+									>
+										<Clock size={18} /> Waiting for waiter to start
+									</div>
+								)}
 								{order.status === 'PREPARING' && (
 									<button
 										onClick={() => updateStatus(order.id, 'DELIVERED')}

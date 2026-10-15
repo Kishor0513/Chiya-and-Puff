@@ -76,19 +76,27 @@ export async function POST(request: NextRequest) {
 			return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
 		const payload = await verifyAuth(token);
-		if (payload.role !== 'ADMIN') {
-			// Only admins can physically add new tables
+		if (payload.role !== 'ADMIN' && payload.role !== 'WAITER') {
+			// Waiter dashboard has an Add Table button, so both roles can create.
+			// Admin Tables page keeps full control (including delete, which stays ADMIN-only).
 			return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 		}
 
 		const { tableNumber } = await request.json();
+		const parsed = parseInt(tableNumber);
+		if (!Number.isFinite(parsed) || parsed <= 0) {
+			return NextResponse.json(
+				{ error: 'Valid table number is required' },
+				{ status: 400 },
+			);
+		}
 
 		// Generate a unique token for this table's QR link
 		const qrData = crypto.randomBytes(8).toString('hex');
 
 		const table = await prisma.table.create({
 			data: {
-				tableNumber: parseInt(tableNumber),
+				tableNumber: parsed,
 				qrData,
 				status: 'AVAILABLE',
 			},

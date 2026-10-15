@@ -19,7 +19,9 @@ async function checkChefAuth() {
 	}
 }
 
-// Get active orders (PENDING and PREPARING) for the kitchen
+// Get active orders for the kitchen.
+// PENDING is included as read-only so chefs can see incoming demand,
+// but only PREPARING -> DELIVERED can be actioned here (waiter triages PENDING -> PREPARING).
 export async function GET() {
 	const auth = await checkChefAuth();
 	if (!auth) {
@@ -29,7 +31,7 @@ export async function GET() {
 	try {
 		const orders = await prisma.order.findMany({
 			where: {
-				status: { in: ['PREPARING', 'DELIVERED'] },
+				status: { in: ['PENDING', 'PREPARING', 'DELIVERED'] },
 			},
 			orderBy: { createdAt: 'asc' },
 			include: {
