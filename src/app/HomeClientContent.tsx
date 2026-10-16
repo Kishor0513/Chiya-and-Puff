@@ -20,7 +20,6 @@ interface MenuItem {
 }
 
 interface HomeClientContentProps {
-  categories: string[];
   dishes: MenuItem[];
 }
 

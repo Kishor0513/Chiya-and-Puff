@@ -15,14 +15,13 @@ interface RevealProps {
 // viewport. Fully disabled under prefers-reduced-motion (see CSS).
 export default function Reveal({ children, delay = 0, as = 'div', className = '' }: RevealProps) {
   const [el, setEl] = useState<HTMLElement | null>(null);
-  const [visible, setVisible] = useState(false);
+  // If IntersectionObserver doesn't exist (very old browser / SSR), stay visible.
+  const [visible, setVisible] = useState(
+    () => typeof IntersectionObserver === 'undefined',
+  );
 
   useEffect(() => {
-    if (!el) return;
-    if (typeof IntersectionObserver === 'undefined') {
-      setVisible(true);
-      return;
-    }
+    if (!el || typeof IntersectionObserver === 'undefined') return;
     const obs = new IntersectionObserver(
       (entries) => {
         if (entries.some((e) => e.isIntersecting)) {
