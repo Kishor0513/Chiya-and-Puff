@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma';
 import type { MenuItem } from '@/types';
 import SiteFooter from '@/components/SiteFooter';
 import SiteHeader from '@/components/SiteHeader';
+import Reveal from '@/components/Reveal';
+import { foodImageFor } from '@/lib/foodImages';
 import styles from '../page.module.css';
 
 export const dynamic = 'force-dynamic';
@@ -49,22 +51,32 @@ export default async function MenuPage() {
             if (items.length === 0) return null;
 
             return (
-              <div key={category} className={styles.categorySection}>
+              <Reveal key={category} className={styles.categorySection}>
                 <h3 className={styles.categoryTitle}>{category}</h3>
                 <div className={styles.menuGrid}>
                   {items.map((item) => (
                     <div key={item.id} className={`${styles.menuCard} glass-panel hover-lift`}>
-                      <div className={styles.menuCardTop}>
-                        <h4 className={styles.itemName}>{item.name}</h4>
-                        <span className={styles.itemPrice}>Rs. {item.price.toFixed(2)}</span>
+                      <div className={styles.menuCardRow}>
+                        <img
+                          src={item.imageUrl || foodImageFor(item.name, item.category)}
+                          alt={item.name}
+                          loading="lazy"
+                          className={styles.dishThumb}
+                        />
+                        <div className={styles.menuCardBody}>
+                          <div className={styles.menuCardTop}>
+                            <h4 className={styles.itemName}>{item.name}</h4>
+                            <span className={styles.itemPrice}>Rs. {item.price.toFixed(2)}</span>
+                          </div>
+                          {item.description && (
+                            <p className={styles.itemDescription}>{item.description}</p>
+                          )}
+                        </div>
                       </div>
-                      {item.description && (
-                        <p className={styles.itemDescription}>{item.description}</p>
-                      )}
                     </div>
                   ))}
                 </div>
-              </div>
+              </Reveal>
             );
           })
         )}

@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Coffee, Info, Star, UtensilsCrossed } from 'lucide-react';
+import { Coffee, Croissant, Info, QrCode } from 'lucide-react';
 import Link from 'next/link';
 import HomeTerminal from './HomeTerminal';
 import SiteFooter from '@/components/SiteFooter';
@@ -43,7 +43,13 @@ interface HomeClientContentProps {
 }
 
 export default function HomeClientContent({ dishes }: HomeClientContentProps) {
-  const specials = dishes.slice(0, 3);
+  // Our signatures first: a chiya, then a puff, then whatever is popular.
+  const chiya = dishes.find((d) => /chiya|tea/i.test(d.name));
+  const puff = dishes.find((d) => /puff/i.test(d.name));
+  const specials = [chiya, puff, ...dishes]
+    .filter((d): d is MenuItem => Boolean(d))
+    .filter((d, i, arr) => arr.findIndex((x) => x.id === d.id) === i)
+    .slice(0, 3);
 
   return (
     <div className={styles.pageWrapper}>
@@ -61,11 +67,12 @@ export default function HomeClientContent({ dishes }: HomeClientContentProps) {
       >
         <div className={styles.heroContent}>
           <motion.h1 className={styles.heroTitle} variants={itemVariants}>
-            Authentic Taste.<br />
-            <span className={styles.heroHighlight}>Smart Ordering.</span>
+            Slow-Brewed Chiya.<br />
+            <span className={styles.heroHighlight}>Fresh-Baked Puff.</span>
           </motion.h1>
           <motion.p className={styles.heroSubtitle} variants={itemVariants}>
-            Welcome to Chiya &amp; Puff, where traditional Nepalese cuisine meets seamless modern dining. Scan the QR code on your table, or use our digital terminal to get started.
+            Welcome to Chiya &amp; Puff — a Nepali tea and puff kitchen for breakfasts, evening snacks and everything in between.
+            We brew chiya to order, bake puffs golden twice a day, and take your table&apos;s order by QR so it arrives hot.
           </motion.p>
           <motion.div className={styles.heroActions} variants={itemVariants}>
             <Link href="/menu" className="btn btn-primary">View Our Menu</Link>
@@ -90,28 +97,28 @@ export default function HomeClientContent({ dishes }: HomeClientContentProps) {
           <div className={styles.iconWrapper}>
             <Info size={32} />
           </div>
-          <h2 style={{ fontSize: '2.5rem', marginBottom: '1.5rem' }}>About Chiya &amp; Puff</h2>
+          <h2 style={{ fontSize: '2.5rem', marginBottom: '1.5rem' }}>Chiya &amp; Puff, Every Morning</h2>
           <p style={{ fontSize: '1.125rem', color: 'var(--text-muted)', lineHeight: 1.8, marginBottom: '2rem' }}>
-            Born from a passion for authentic Himalayan spices and the warm comfort of street-corner tea (Chiya), we bring the vibrant flavors of Nepal straight to your table.
-            From our hand-crimped Momo dumplings to our sizzling Sekuwa, every dish is prepared with traditional recipes and a dash of modern flair.
+            Our day starts with two things: a pot of spiced milk chiya and a tray of puffs going into the oven.
+            Masala, adrak-elaichi, butter tea; veg, chicken, buff and paneer puffs — simple things done properly, served steaming at your table.
           </p>
         </div>
 
         <div className={styles.grid}>
           <div className={`${styles.featureCard} glass-panel hover-lift`}>
-            <Star size={32} color="var(--primary)" style={{ marginBottom: '1rem' }} />
-            <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>Premium Quality</h3>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Authentic spices sourced directly to ensure the truest taste of the Himalayas.</p>
+            <Coffee size={32} color="var(--primary)" style={{ marginBottom: '1rem' }} />
+            <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>Chiya, Many Ways</h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Masala, adrak-elaichi, butter and iced chiya — brewed per cup, never reheated.</p>
           </div>
           <div className={`${styles.featureCard} glass-panel hover-lift`}>
-            <UtensilsCrossed size={32} color="var(--secondary)" style={{ marginBottom: '1rem' }} />
-            <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>Freshly Prepared</h3>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Every dish is crafted from scratch upon ordering, including our signature Momo.</p>
+            <Croissant size={32} color="var(--secondary)" style={{ marginBottom: '1rem' }} />
+            <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>Puffs, Baked Golden</h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Flaky, generously filled veg, chicken, buff and paneer puffs — morning and evening batches.</p>
           </div>
           <div className={`${styles.featureCard} glass-panel hover-lift`}>
-            <Coffee size={32} color="#F5A623" style={{ marginBottom: '1rem' }} />
-            <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>Warm Ambience</h3>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>A perfect environment designed for deep conversations and memorable moments.</p>
+            <QrCode size={32} color="#E8A93D" style={{ marginBottom: '1rem' }} />
+            <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>Ordered By QR</h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Scan your table, order in seconds, and track it live from oven to table.</p>
           </div>
         </div>
       </motion.section>
@@ -119,8 +126,8 @@ export default function HomeClientContent({ dishes }: HomeClientContentProps) {
       {specials.length > 0 && (
         <section className={styles.section}>
           <div className={styles.menuHeader}>
-            <h2 style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>Loved Plates</h2>
-            <p style={{ color: 'var(--text-muted)', fontSize: '1.125rem' }}>A taste of this week&apos;s live menu — the full list is one tap away.</p>
+            <h2 style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>Chiya &amp; Puff Signatures</h2>
+            <p style={{ color: 'var(--text-muted)', fontSize: '1.125rem' }}>Our most-ordered cup and our most-ordered bake — plus one more from this week&apos;s live menu.</p>
           </div>
           <div className={styles.photoGrid}>
             {specials.map((item, i) => (

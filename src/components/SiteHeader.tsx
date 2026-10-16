@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { UtensilsCrossed } from 'lucide-react';
 import Link from 'next/link';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import styles from '@/app/page.module.css';
@@ -19,9 +18,7 @@ export default function SiteHeader() {
   return (
     <header className={`${styles.header}${scrolled ? ` ${styles.headerScrolled}` : ''}`}>
       <Link href="/" className={styles.headerLogo}>
-        <span className={styles.logoIcon}>
-          <UtensilsCrossed size={24} />
-        </span>
+        <img src="/logo.svg" alt="Chiya and Puff" width={42} height={42} />
         <span style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700 }}>Chiya &amp; Puff</span>
       </Link>
       <nav className={styles.nav}>

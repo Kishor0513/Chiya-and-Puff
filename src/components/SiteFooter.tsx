@@ -1,4 +1,3 @@
-import { UtensilsCrossed } from 'lucide-react';
 import Link from 'next/link';
 import styles from '@/app/page.module.css';
 
@@ -6,7 +5,7 @@ export default function SiteFooter() {
   return (
     <footer className={styles.footer}>
       <div className={styles.footerLogo}>
-        <UtensilsCrossed size={20} />
+        <img src="/logo.svg" alt="Chiya and Puff" width={30} height={30} />
         <span>Chiya &amp; Puff - Restaurant Management System</span>
       </div>
       <div className={styles.footerLinks}>

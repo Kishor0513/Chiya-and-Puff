@@ -1,14 +1,14 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
 :root {
-  --primary: #FF5A5F;
-  --primary-hover: #E34A4F;
-  --secondary: #00A699;
-  --background: #F7F7F9;
-  --card-bg: rgba(255, 255, 255, 0.85);
-  --text-main: #222222;
-  --text-muted: #767676;
-  --border-color: rgba(0, 0, 0, 0.08);
+  --primary: #C0681D;
+  --primary-hover: #9E5414;
+  --secondary: #7A4A1E;
+  --background: #FBF6EE;
+  --card-bg: rgba(255, 255, 255, 0.88);
+  --text-main: #2B1D10;
+  --text-muted: #7C6A55;
+  --border-color: rgba(122, 74, 30, 0.16);
 
   /* Aliases used by the waiter / kitchen / admin / table ordering screens */
   --bg: var(--background);
@@ -33,11 +33,11 @@
 
 [data-theme='dark'],
 .dark {
-  --background: #0B0B0E;
-  --card-bg: rgba(22, 22, 26, 0.7);
-  --text-main: #F7FBFF;
-  --text-muted: #A0AEC0;
-  --border-color: rgba(255, 255, 255, 0.1);
+  --background: #16100B;
+  --card-bg: rgba(30, 22, 15, 0.75);
+  --text-main: #F7EFE3;
+  --text-muted: #B49F86;
+  --border-color: rgba(232, 169, 61, 0.16);
   --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.5);
   --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.6);
 
@@ -76,8 +76,8 @@ body::before {
   left: -50%;
   width: 200%;
   height: 200%;
-  background: radial-gradient(circle at 50% 50%, rgba(255, 90, 95, 0.03) 0%, transparent 50%),
-              radial-gradient(circle at 80% 20%, rgba(0, 166, 153, 0.03) 0%, transparent 50%);
+  background: radial-gradient(circle at 50% 50%, rgba(192, 104, 29, 0.05) 0%, transparent 50%),
+              radial-gradient(circle at 80% 20%, rgba(232, 169, 61, 0.06) 0%, transparent 50%);
   z-index: -1;
   animation: bg-drift 25s ease-in-out infinite alternate;
 }
@@ -138,12 +138,12 @@ a {
 .btn-primary {
   background: linear-gradient(135deg, var(--primary), var(--primary-hover));
   color: white;
-  box-shadow: 0 4px 14px rgba(255, 90, 95, 0.3);
+  box-shadow: 0 4px 14px rgba(192, 104, 29, 0.35);
 }
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(255, 90, 95, 0.4);
+  box-shadow: 0 6px 20px rgba(192, 104, 29, 0.45);
 }
 
 .btn-secondary {

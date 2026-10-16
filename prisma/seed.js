@@ -94,6 +94,9 @@ async function main() {
             // Drinks
             { name: 'Masala Chiya', description: 'Traditional milk tea brewed with warming spices.', price: 50, category: 'Drinks', available: true },
             { name: 'Black Chiya', description: 'Simple traditional black tea.', price: 40, category: 'Drinks', available: true },
+            { name: 'Adrak Elaichi Chiya', description: 'Milk chiya brewed with fresh ginger and green cardamom.', price: 60, category: 'Drinks', available: true },
+            { name: 'Himalayan Butter Chiya', description: 'Salted butter tea whisked the highland way — warming and rich.', price: 70, category: 'Drinks', available: true },
+            { name: 'Iced Masala Chiya', description: 'Our spiced milk chiya, chilled and poured over ice.', price: 80, category: 'Drinks', available: true },
             { name: 'Lemon Tea', description: 'Hot black tea with freshly squeezed lemon.', price: 60, category: 'Drinks', available: true },
             { name: 'Black Coffee', description: 'Freshly brewed strong black coffee.', price: 80, category: 'Drinks', available: true },
             { name: 'Milk Coffee', description: 'Classic milk coffee.', price: 100, category: 'Drinks', available: true },
@@ -101,6 +104,13 @@ async function main() {
             { name: 'Lassi (Sweet)', description: 'Traditional sweet yogurt drink.', price: 120, category: 'Drinks', available: true },
             { name: 'Banana Lassi', description: 'Yogurt drink blended with fresh bananas.', price: 150, category: 'Drinks', available: true },
             { name: 'Coke / Sprite / Fanta', description: 'Chilled carbonated beverage.', price: 60, category: 'Drinks', available: true },
+
+            // Puffs — baked golden twice a day
+            { name: 'Veg Puff', description: 'Flaky golden puff filled with spiced mixed vegetables.', price: 50, category: 'Puffs', available: true },
+            { name: 'Chicken Puff', description: 'Crisp puff pastry with a juicy minced chicken filling.', price: 70, category: 'Puffs', available: true },
+            { name: 'Buff Puff', description: 'Our signature — flaky puff with seasoned buff filling.', price: 65, category: 'Puffs', available: true },
+            { name: 'Paneer Puff', description: 'Golden puff stuffed with soft spiced paneer.', price: 70, category: 'Puffs', available: true },
+            { name: 'Chocolate Puff', description: 'Sweet puff with a warm molten chocolate centre.', price: 80, category: 'Puffs', available: true },
 
             // Desserts
             { name: 'Juju Dhau', description: 'King curd (sweetened yogurt) traditional to Bhaktapur.', price: 100, category: 'Desserts', available: true },

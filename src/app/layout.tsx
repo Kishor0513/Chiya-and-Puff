@@ -5,16 +5,17 @@ import './globals.css';
 import { ThemeProvider } from '@/components/ThemeProvider';
 
 export const metadata: Metadata = {
-	title: 'Chiya and Puff | Admin & Ordering',
-	description: 'Premium Restaurant Management System',
+	title: 'Chiya and Puff | Nepali Tea & Puff Kitchen',
+	description: 'Chiya and Puff — Nepali tea and fresh-baked puff kitchen with QR table ordering.',
 	manifest: '/manifest.json',
+	icons: { icon: '/logo.svg' },
 };
 
 export const viewport: Viewport = {
 	width: 'device-width',
 	initialScale: 1,
 	maximumScale: 1,
-	themeColor: '#FF5A5F',
+	themeColor: '#C0681D',
 };
 
 export default function RootLayout({

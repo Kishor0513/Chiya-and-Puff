@@ -17,7 +17,7 @@
   width: 400px;
   height: 400px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 90, 95, 0.12) 0%, transparent 60%);
+  background: radial-gradient(circle, rgba(192, 104, 29, 0.14) 0%, transparent 60%);
   filter: blur(40px);
   z-index: -1;
   opacity: 0.6;
@@ -30,7 +30,7 @@
   width: 500px;
   height: 500px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(0, 166, 153, 0.12) 0%, transparent 60%);
+  background: radial-gradient(circle, rgba(232, 169, 61, 0.16) 0%, transparent 60%);
   filter: blur(40px);
   z-index: -1;
   opacity: 0.6;
@@ -147,8 +147,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 166, 153, 0.1);
-  color: var(--secondary);
+  background: rgba(192, 104, 29, 0.12);
+  color: var(--primary);
   padding: 1.25rem;
   border-radius: 50%;
   margin-bottom: 2rem;
@@ -337,6 +337,78 @@
   margin-top: 3rem;
 }
 
+/* ---- Full-menu thumbnails ---- */
+
+.dishThumb {
+  width: 76px;
+  height: 76px;
+  border-radius: 12px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: rgba(122, 74, 30, 0.08);
+  transition: transform 0.3s ease;
+}
+
+.menuCard:hover .dishThumb {
+  transform: scale(1.06);
+}
+
+.menuCardRow {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.menuCardBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* ---- Place gallery ---- */
+
+.placeGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.placeCard {
+  overflow: hidden;
+}
+
+.placeCard img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.placeCard:hover img {
+  transform: scale(1.05);
+}
+
+.placeBody {
+  padding: 1.5rem 1.75rem 1.75rem;
+}
+
+.placeBody h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1.15rem;
+}
+
+.placeBody p {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
 /* ---- Improvements on the original: scroll reveal ---- */
 
 .reveal {
@@ -359,11 +431,15 @@
     transition: none;
   }
 
-  .photoCard img {
+  .photoCard img,
+  .placeCard img,
+  .dishThumb {
     transition: none;
   }
 
-  .photoCard:hover img {
+  .photoCard:hover img,
+  .placeCard:hover img,
+  .menuCard:hover .dishThumb {
     transform: none;
   }
 }

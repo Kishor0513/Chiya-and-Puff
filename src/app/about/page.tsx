@@ -1,7 +1,9 @@
-import { Coffee, Info, Star, UtensilsCrossed } from 'lucide-react';
+import { Coffee, Croissant, Info, QrCode } from 'lucide-react';
 import SiteFooter from '@/components/SiteFooter';
 import SiteHeader from '@/components/SiteHeader';
+import Reveal from '@/components/Reveal';
 import { PHONE } from '@/lib/site';
+import { PLACE_IMAGES } from '@/lib/foodImages';
 import styles from '../page.module.css';
 
 export default function AboutPage() {
@@ -17,34 +19,53 @@ export default function AboutPage() {
           <div className={styles.iconWrapper}>
             <Info size={32} />
           </div>
-          <h2 style={{ fontSize: '2.5rem', marginBottom: '1.5rem' }}>About Chiya &amp; Puff</h2>
+          <h2 style={{ fontSize: '2.5rem', marginBottom: '1.5rem' }}>A Tea &amp; Puff Kitchen</h2>
           <p style={{ fontSize: '1.125rem', color: 'var(--text-muted)', lineHeight: 1.8, marginBottom: '2rem' }}>
-            Born from a passion for authentic Himalayan spices and the warm comfort of street-corner tea (Chiya), we bring the vibrant flavors of Nepal straight to your table.
-            From our hand-crimped Momo dumplings to our sizzling Sekuwa, every dish is prepared with traditional recipes and a dash of modern flair.
+            Chiya &amp; Puff is built around Nepal&apos;s favourite pairing: a steaming glass of spiced milk chiya
+            and a flaky, golden puff. Masala, adrak-elaichi and butter chiya brewed per cup; veg, chicken, buff
+            and paneer puffs baked in small morning and evening batches.
           </p>
           <p style={{ fontSize: '1.125rem', color: 'var(--text-muted)', lineHeight: 1.8, marginBottom: '2rem' }}>
-            The QR ordering is there for one reason: so a full house never means slow service. Your order goes to the kitchen the second you place it, and you can
-            see exactly where it stands. Behind the counter, waiters work from a live table plan, the kitchen cooks off a display screen, and the bill prints as a
-            proper receipt payable by cash, eSewa, Khalti or FonePay.
+            Around that core sits the wider kitchen — momos, chowmein, thukpa, sadeko starters, choila and sekuwa,
+            thali sets and desserts. And the QR ordering means your chiya arrives steaming: the order hits the kitchen
+            the second you place it, and the bill prints as a proper receipt payable by cash, eSewa, Khalti or FonePay.
           </p>
         </div>
 
         <div className={styles.grid}>
           <div className={`${styles.featureCard} glass-panel hover-lift`}>
-            <Star size={32} color="var(--primary)" style={{ marginBottom: '1rem' }} />
-            <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>Premium Quality</h3>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Authentic spices sourced directly to ensure the truest taste of the Himalayas.</p>
+            <Coffee size={32} color="var(--primary)" style={{ marginBottom: '1rem' }} />
+            <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>Chiya, Many Ways</h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Masala, adrak-elaichi, butter and iced chiya — brewed per cup, never reheated.</p>
           </div>
           <div className={`${styles.featureCard} glass-panel hover-lift`}>
-            <UtensilsCrossed size={32} color="var(--secondary)" style={{ marginBottom: '1rem' }} />
-            <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>Freshly Prepared</h3>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Every dish is crafted from scratch upon ordering, including our signature Momo.</p>
+            <Croissant size={32} color="var(--secondary)" style={{ marginBottom: '1rem' }} />
+            <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>Puffs, Baked Golden</h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Flaky, generously filled puffs in veg, chicken, buff and paneer.</p>
           </div>
           <div className={`${styles.featureCard} glass-panel hover-lift`}>
-            <Coffee size={32} color="#F5A623" style={{ marginBottom: '1rem' }} />
-            <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>Warm Ambience</h3>
+            <QrCode size={32} color="#E8A93D" style={{ marginBottom: '1rem' }} />
+            <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>Ordered By QR</h3>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Call ahead on {PHONE} for group tables — we will keep seats together.</p>
           </div>
+        </div>
+      </section>
+
+      <section className={styles.section} style={{ paddingTop: 0 }}>
+        <div className={styles.menuHeader}>
+          <h2 style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>Our Place</h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: '1.125rem' }}>The counter, the oven trays and the evening tables.</p>
+        </div>
+        <div className={styles.placeGrid}>
+          {PLACE_IMAGES.map((place, i) => (
+            <Reveal as="article" key={place.title} delay={i * 100} className={`${styles.placeCard} glass-panel hover-lift`}>
+              <img src={place.src} alt={place.title} loading="lazy" />
+              <div className={styles.placeBody}>
+                <h3>{place.title}</h3>
+                <p>{place.text}</p>
+              </div>
+            </Reveal>
+          ))}
         </div>
       </section>
 
