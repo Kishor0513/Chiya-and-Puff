@@ -1,14 +1,15 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { verifyAuth } from '@/lib/auth';
+import { sortMenuItems } from '@/lib/menu';
 import type { NextRequest } from 'next/server';
 
 export async function GET() {
     try {
-        const items = await prisma.menuItem.findMany({
-            orderBy: { category: 'asc' }
-        });
-        return NextResponse.json(items);
+        const items = await prisma.menuItem.findMany();
+        // Canonical breakfast-first order (Puffs → … → Desserts last),
+        // so guests and the QR ordering page never see dessert first.
+        return NextResponse.json(sortMenuItems(items));
     } catch {
         return NextResponse.json({ error: 'Failed to fetch menu items' }, { status: 500 });
     }

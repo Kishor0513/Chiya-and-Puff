@@ -367,6 +367,15 @@
   height: 100%;
 }
 
+.dishExtra {
+  margin: 0.5rem 0 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--primary);
+  line-height: 1.5;
+}
+
 /* ---- Place gallery ---- */
 
 .placeGrid {
