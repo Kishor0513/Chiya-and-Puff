@@ -37,7 +37,11 @@ const CURRY = [
   'photo-1589302168068-964664d93dc0',
   'photo-1631452180519-c014fe946bc7',
 ];
-const CHIYA = ['photo-1544787219-7f47ccb76574', 'photo-1571934811356-5cc061b6821f'];
+const CHIYA = [
+  'photo-1544787219-7f47ccb76574',
+  'photo-1571934811356-5cc061b6821f',
+  'photo-1564890369478-c89ca6d9cde9',
+];
 const COFFEE = ['photo-1541167760496-1628856ab772'];
 const COLD = ['photo-1577805947697-89e18249d767', 'photo-1554866585-cd948fdf7e90'];
 const PUFF = [

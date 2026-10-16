@@ -4,6 +4,7 @@ import type { MenuItem } from '@/types';
 import SiteFooter from '@/components/SiteFooter';
 import SiteHeader from '@/components/SiteHeader';
 import Reveal from '@/components/Reveal';
+import DishImg from '@/components/DishImg';
 import { foodImageFor } from '@/lib/foodImages';
 import { ingredientsFor, orderedCategories, sortMenuItems } from '@/lib/menu';
 import styles from '../page.module.css';
@@ -60,10 +61,9 @@ export default async function MenuPage() {
                     return (
                       <div key={item.id} className={`${styles.menuCard} glass-panel hover-lift`}>
                         <div className={styles.menuCardRow}>
-                          <img
+                          <DishImg
                             src={item.imageUrl || foodImageFor(item.name, item.category)}
                             alt={item.name}
-                            loading="lazy"
                             className={styles.dishThumb}
                           />
                           <div className={styles.menuCardBody}>

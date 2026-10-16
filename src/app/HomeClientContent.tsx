@@ -7,6 +7,7 @@ import HomeTerminal from './HomeTerminal';
 import SiteFooter from '@/components/SiteFooter';
 import SiteHeader from '@/components/SiteHeader';
 import Reveal from '@/components/Reveal';
+import DishImg from '@/components/DishImg';
 import { foodImageFor, shortBlurbFor } from '@/lib/foodImages';
 import styles from './page.module.css';
 
@@ -131,12 +132,12 @@ export default function HomeClientContent({ dishes }: HomeClientContentProps) {
           </div>
           <div className={styles.photoGrid}>
             {specials.map((item, i) => (
-              <Reveal as="article" key={item.id} delay={i * 100} className={`${styles.photoCard} glass-panel hover-lift`}>
-                <img
-                  src={item.imageUrl || foodImageFor(item.name, item.category)}
-                  alt={item.name}
-                  loading="lazy"
-                />
+                <Reveal as="article" key={item.id} delay={i * 100} className={`${styles.photoCard} glass-panel hover-lift`}>
+                  <DishImg
+                    src={item.imageUrl || foodImageFor(item.name, item.category)}
+                    alt={item.name}
+                    eager
+                  />
                 <div className={styles.photoBody}>
                   <p className={styles.photoCat}>{item.category}</p>
                   <h3>{item.name}</h3>
