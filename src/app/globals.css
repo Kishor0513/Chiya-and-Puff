@@ -1,46 +1,43 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
 :root {
-  --primary: #c8102e;
-  --primary-hover: #9e0b24;
-  --primary-dark: #7a081c;
-  --secondary: #211915;
-  --background: #faf7f2;
-  --card-bg: #ffffff;
-  --text-main: #211915;
-  --text-muted: #6f6459;
-  --border-color: #e7ddd0;
+  --primary: #FF5A5F;
+  --primary-hover: #E34A4F;
+  --secondary: #00A699;
+  --background: #F7F7F9;
+  --card-bg: rgba(255, 255, 255, 0.85);
+  --text-main: #222222;
+  --text-muted: #767676;
+  --border-color: rgba(0, 0, 0, 0.08);
 
-  /* Aliases used by dashboards / ordering flow (non-breaking fix) */
+  /* Aliases used by the waiter / kitchen / admin / table ordering screens */
   --bg: var(--background);
   --glass: var(--card-bg);
   --glass-border: var(--border-color);
   --text-primary: var(--text-main);
   --text-secondary: var(--text-muted);
 
-  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-    'Helvetica Neue', Arial, sans-serif;
-  --display-font: 'Playfair Display', Georgia, 'Times New Roman', serif;
-  
-  --shadow-sm: 0 1px 3px rgba(33, 25, 21, 0.08);
-  --shadow-md: 0 4px 14px rgba(33, 25, 21, 0.1);
-  --shadow-lg: 0 10px 30px rgba(33, 25, 21, 0.14);
+  --font-family: 'Outfit', sans-serif;
 
-  --radius-sm: 6px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
+  --shadow-md: 0 8px 24px rgba(0,0,0,0.08);
+  --shadow-lg: 0 16px 40px rgba(0,0,0,0.12);
+
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
   --radius-full: 9999px;
 
-  --transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+  --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 [data-theme='dark'],
 .dark {
-  --background: #141110;
-  --card-bg: #1e1a17;
-  --text-main: #f5efe6;
-  --text-muted: #b3a696;
-  --border-color: #38302a;
+  --background: #0B0B0E;
+  --card-bg: rgba(22, 22, 26, 0.7);
+  --text-main: #F7FBFF;
+  --text-muted: #A0AEC0;
+  --border-color: rgba(255, 255, 255, 0.1);
   --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.5);
   --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.6);
 
@@ -71,17 +68,33 @@ body {
   overflow-x: hidden;
 }
 
-/* Plain paper backdrop */
+/* Base App Layout Background Animation */
 body::before {
-  content: none;
+  content: '';
+  position: fixed;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 90, 95, 0.03) 0%, transparent 50%),
+              radial-gradient(circle at 80% 20%, rgba(0, 166, 153, 0.03) 0%, transparent 50%);
+  z-index: -1;
+  animation: bg-drift 25s ease-in-out infinite alternate;
 }
 
-/* Solid cards (keeps .glass-panel class name so dashboards keep working) */
+@keyframes bg-drift {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(-5%, -5%); }
+}
+
+/* Glassmorphism Classes */
 .glass-panel {
   background: var(--card-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--border-color);
-  border-radius: 12px;
-  box-shadow: var(--shadow-sm);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
 }
 
 /* Typography Utility */
@@ -101,46 +114,48 @@ a {
   transition: var(--transition);
 }
 
-/* Solid restaurant buttons */
+/* Premium Buttons */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.7rem 1.6rem;
-  border-radius: 6px;
-  font-weight: 700;
+  padding: 0.75rem 1.75rem;
+  border-radius: var(--radius-full);
+  font-weight: 600;
   font-family: var(--font-family);
   cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition: var(--transition);
   border: none;
   outline: none;
   gap: 0.5rem;
-  font-size: 0.95rem;
-  letter-spacing: 0.01em;
+  font-size: 1rem;
 }
 
 .btn:active {
-  transform: translateY(1px);
+  transform: scale(0.96);
 }
 
 .btn-primary {
-  background: var(--primary);
-  color: #fff;
-  box-shadow: none;
+  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+  color: white;
+  box-shadow: 0 4px 14px rgba(255, 90, 95, 0.3);
 }
 
 .btn-primary:hover {
-  background: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 90, 95, 0.4);
 }
 
 .btn-secondary {
-  background: #fff;
+  background: var(--card-bg);
   color: var(--text-main);
   border: 1px solid var(--border-color);
+  backdrop-filter: blur(10px);
 }
 
 .btn-secondary:hover {
-  background: #f3ece1;
+  background: var(--background);
+  transform: translateY(-2px);
 }
 
 /* General Layouts */
@@ -174,54 +189,21 @@ a {
   }
 }
 
-/* Subtle entrance */
+/* Animations */
 .hover-lift {
-  transition: box-shadow 0.15s ease;
+  transition: var(--transition);
 }
 
 .hover-lift:hover {
-  box-shadow: var(--shadow-md);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
 }
 
-/* ---- Base polish ---- */
-
-::selection {
-  background: rgba(200, 16, 46, 0.16);
-}
-
+/* Accessible focus + motion preferences (invisible, keeps behavior) */
 :focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
-  border-radius: 4px;
-}
-
-.display-serif {
-  font-family: var(--display-font);
-  letter-spacing: 0;
-}
-
-/* Smoother inputs inside management + ordering flows */
-input, select, textarea {
-  font-family: var(--font-family);
-}
-
-input::placeholder {
-  color: var(--text-muted);
-  opacity: 0.8;
-}
-
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: #c9bfae;
-  border-radius: 8px;
-  border: 2px solid transparent;
-  background-clip: content-box;
+  border-radius: 6px;
 }
 
 @media (prefers-reduced-motion: reduce) {

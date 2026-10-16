@@ -1,14 +1,33 @@
 'use client';
 
-import { ChefHat, QrCode, Receipt, UtensilsCrossed } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Coffee, Info, Star, UtensilsCrossed } from 'lucide-react';
 import Link from 'next/link';
 import HomeTerminal from './HomeTerminal';
 import SiteFooter from '@/components/SiteFooter';
 import SiteHeader from '@/components/SiteHeader';
 import Reveal from '@/components/Reveal';
-import { ADDRESS, HOURS, PHONE } from '@/lib/site';
 import { foodImageFor, shortBlurbFor } from '@/lib/foodImages';
 import styles from './page.module.css';
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.15
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: { type: 'spring', stiffness: 100, damping: 20 }
+  }
+} as const;
 
 interface MenuItem {
   id: string;
@@ -23,155 +42,108 @@ interface HomeClientContentProps {
   dishes: MenuItem[];
 }
 
-const STEPS = [
-  {
-    no: '01',
-    icon: <QrCode size={20} />,
-    title: 'Scan your table QR',
-    text: 'Point your phone camera at the tent card. The menu opens for your table — no app to install.',
-  },
-  {
-    no: '02',
-    icon: <UtensilsCrossed size={20} />,
-    title: 'Order from the menu',
-    text: 'Add dishes to the cart and place the order. It reaches the waiter and kitchen instantly.',
-  },
-  {
-    no: '03',
-    icon: <ChefHat size={20} />,
-    title: 'We cook, you track',
-    text: 'Follow each order live: received, being prepared, delivered — all on the same page.',
-  },
-  {
-    no: '04',
-    icon: <Receipt size={20} />,
-    title: 'Pay the bill',
-    text: 'Check the receipt-style bill and pay by cash, eSewa, Khalti or FonePay.',
-  },
-];
-
 export default function HomeClientContent({ dishes }: HomeClientContentProps) {
   const specials = dishes.slice(0, 3);
-  const totalDishes = dishes.length;
 
   return (
-    <div className={styles.page}>
+    <div className={styles.pageWrapper}>
+      <div className={styles.blob1} />
+      <div className={styles.blob2} />
+
       <SiteHeader />
 
-      {/* Hero */}
-      <section className={styles.hero}>
-        <div className={styles.wrap}>
-          <div className={styles.heroText}>
-            <h1>
-              Momo, Sekuwa &amp; Chiya,
-              <br />
-              ordered from your table.
-            </h1>
-            <p className={styles.lede}>
-              Chiya &amp; Puff is a dine-in Nepalese restaurant
-              {totalDishes > 0 ? ` with ${totalDishes}+ dishes on the menu` : ''}. Sit
-              down, scan the QR tent card, and order without waiting for anyone.
-            </p>
-            <div className={styles.heroCtas}>
-              <Link href="/menu" className="btn btn-primary">View Full Menu</Link>
-              <a href="#order" className={styles.btnLight}>Order from Your Table</a>
-            </div>
-            <dl className={styles.heroFacts}>
-              <div>
-                <dt>Find us</dt>
-                <dd>{ADDRESS}</dd>
-              </div>
-              <div>
-                <dt>Hours</dt>
-                <dd>{HOURS}</dd>
-              </div>
-              <div>
-                <dt>Call</dt>
-                <dd>{PHONE}</dd>
-              </div>
-            </dl>
+      <motion.section
+        className={styles.heroSection}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true }}
+        variants={containerVariants}
+      >
+        <div className={styles.heroContent}>
+          <motion.h1 className={styles.heroTitle} variants={itemVariants}>
+            Authentic Taste.<br />
+            <span className={styles.heroHighlight}>Smart Ordering.</span>
+          </motion.h1>
+          <motion.p className={styles.heroSubtitle} variants={itemVariants}>
+            Welcome to Chiya &amp; Puff, where traditional Nepalese cuisine meets seamless modern dining. Scan the QR code on your table, or use our digital terminal to get started.
+          </motion.p>
+          <motion.div className={styles.heroActions} variants={itemVariants}>
+            <Link href="/menu" className="btn btn-primary">View Our Menu</Link>
+            <Link href="/about" className="btn btn-secondary">Our Story</Link>
+          </motion.div>
+        </div>
+
+        <motion.div id="order" className={styles.terminalWrapper} variants={itemVariants}>
+          <HomeTerminal />
+        </motion.div>
+      </motion.section>
+
+      <motion.section
+        id="about"
+        className={styles.section}
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-100px" }}
+        transition={{ duration: 0.8 }}
+      >
+        <div className={styles.aboutContent}>
+          <div className={styles.iconWrapper}>
+            <Info size={32} />
           </div>
-          <div id="order" className={styles.heroCard}>
-            <HomeTerminal />
-            <p className={styles.heroCardNote}>
-              Sitting at a table already? Type the table number above, or scan the
-              QR tent card with your phone camera.
-            </p>
+          <h2 style={{ fontSize: '2.5rem', marginBottom: '1.5rem' }}>About Chiya &amp; Puff</h2>
+          <p style={{ fontSize: '1.125rem', color: 'var(--text-muted)', lineHeight: 1.8, marginBottom: '2rem' }}>
+            Born from a passion for authentic Himalayan spices and the warm comfort of street-corner tea (Chiya), we bring the vibrant flavors of Nepal straight to your table.
+            From our hand-crimped Momo dumplings to our sizzling Sekuwa, every dish is prepared with traditional recipes and a dash of modern flair.
+          </p>
+        </div>
+
+        <div className={styles.grid}>
+          <div className={`${styles.featureCard} glass-panel hover-lift`}>
+            <Star size={32} color="var(--primary)" style={{ marginBottom: '1rem' }} />
+            <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>Premium Quality</h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Authentic spices sourced directly to ensure the truest taste of the Himalayas.</p>
+          </div>
+          <div className={`${styles.featureCard} glass-panel hover-lift`}>
+            <UtensilsCrossed size={32} color="var(--secondary)" style={{ marginBottom: '1rem' }} />
+            <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>Freshly Prepared</h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Every dish is crafted from scratch upon ordering, including our signature Momo.</p>
+          </div>
+          <div className={`${styles.featureCard} glass-panel hover-lift`}>
+            <Coffee size={32} color="#F5A623" style={{ marginBottom: '1rem' }} />
+            <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>Warm Ambience</h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>A perfect environment designed for deep conversations and memorable moments.</p>
           </div>
         </div>
-      </section>
+      </motion.section>
 
-      {/* How ordering works */}
-      <section className={styles.section}>
-        <div className={styles.wrap}>
-          <Reveal className={styles.secHead}>
-            <h2>How table ordering works</h2>
-            <p>
-              Every table has its own QR code tied to a live order ticket. Guests
-              order themselves; the waiter, kitchen and billing stay in step behind
-              the counter. <Link href="/about">More about us →</Link>
-            </p>
-          </Reveal>
-          <ol className={styles.steps}>
-            {STEPS.map((s, i) => (
-              <Reveal as="li" key={s.no} delay={i * 90}>
-                <span className={styles.stepNo}>{s.no}</span>
-                <span className={styles.stepIcon}>{s.icon}</span>
-                <h3>{s.title}</h3>
-                <p>{s.text}</p>
+      {specials.length > 0 && (
+        <section className={styles.section}>
+          <div className={styles.menuHeader}>
+            <h2 style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>Loved Plates</h2>
+            <p style={{ color: 'var(--text-muted)', fontSize: '1.125rem' }}>A taste of this week&apos;s live menu — the full list is one tap away.</p>
+          </div>
+          <div className={styles.photoGrid}>
+            {specials.map((item, i) => (
+              <Reveal as="article" key={item.id} delay={i * 100} className={`${styles.photoCard} glass-panel hover-lift`}>
+                <img
+                  src={item.imageUrl || foodImageFor(item.name, item.category)}
+                  alt={item.name}
+                  loading="lazy"
+                />
+                <div className={styles.photoBody}>
+                  <p className={styles.photoCat}>{item.category}</p>
+                  <h3>{item.name}</h3>
+                  <p>{shortBlurbFor(item.description, item.category)}</p>
+                  <span className={styles.photoPrice}>Rs. {item.price.toFixed(2)}</span>
+                </div>
               </Reveal>
             ))}
-          </ol>
-        </div>
-      </section>
-
-      {/* Specials with photos */}
-      {specials.length > 0 && (
-        <section className={`${styles.section} ${styles.menuSection}`}>
-          <div className={styles.wrap}>
-            <div className={styles.secHeadRow}>
-              <Reveal className={styles.secHead}>
-                <h2>Plates regulars ask for</h2>
-                <p>Straight from this week&apos;s live menu.</p>
-              </Reveal>
-              <Link href="/menu" className="btn btn-secondary">Full Menu</Link>
-            </div>
-            <div className={styles.photoCards}>
-              {specials.map((s, i) => (
-                <Reveal as="article" key={s.id} delay={i * 100}>
-                  <img
-                    src={s.imageUrl || foodImageFor(s.name, s.category)}
-                    alt={s.name}
-                    loading="lazy"
-                  />
-                  <div>
-                    <p className={styles.photoCat}>{s.category}</p>
-                    <h3>{s.name}</h3>
-                    <p>{shortBlurbFor(s.description, s.category)}</p>
-                    <p className={styles.photoPrice}>Rs. {s.price.toFixed(0)}</p>
-                  </div>
-                </Reveal>
-              ))}
-            </div>
+          </div>
+          <div className={styles.sectionCta}>
+            <Link href="/menu" className="btn btn-primary">See The Full Menu</Link>
           </div>
         </section>
       )}
-
-      {/* Visit band */}
-      <section className={styles.band}>
-        <div className={styles.wrap}>
-          <Reveal>
-            <h2>Come hungry, leave with chiya.</h2>
-            <p>
-              {ADDRESS} · {HOURS} · {PHONE}
-            </p>
-          </Reveal>
-          <div className={styles.bandCtas}>
-            <Link href="/contact" className="btn btn-primary">Find Us</Link>
-            <Link href="/menu" className={styles.btnGhost}>Browse Menu</Link>
-          </div>
-        </div>
-      </section>
 
       <SiteFooter />
     </div>

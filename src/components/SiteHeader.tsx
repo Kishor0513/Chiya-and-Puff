@@ -1,10 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Clock, MapPin, Phone, UtensilsCrossed } from 'lucide-react';
+import { UtensilsCrossed } from 'lucide-react';
 import Link from 'next/link';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { ADDRESS, HOURS, PHONE } from '@/lib/site';
 import styles from '@/app/page.module.css';
 
 export default function SiteHeader() {
@@ -18,42 +17,21 @@ export default function SiteHeader() {
   }, []);
 
   return (
-    <>
-      <div className={styles.topbar}>
-        <div className={styles.wrap}>
-          <span className={styles.topItem}>
-            <MapPin size={13} /> {ADDRESS}
-          </span>
-          <span className={styles.topItem}>
-            <Clock size={13} /> {HOURS}
-          </span>
-          <span className={styles.topRight}>
-            <Phone size={13} /> {PHONE}
-            <span className={styles.topSep}>|</span>
-            <Link href="/login">Staff Login</Link>
-          </span>
-        </div>
-      </div>
-      <header className={`${styles.header}${scrolled ? ` ${styles.headerScrolled}` : ''}`}>
-        <div className={styles.wrap}>
-          <Link href="/" className={styles.brand}>
-            <span className={styles.brandMark}>
-              <UtensilsCrossed size={20} />
-            </span>
-            <span>
-              <span className={styles.brandName}>Chiya &amp; Puff</span>
-              <span className={styles.brandTag}>Nepalese Kitchen — Kathmandu</span>
-            </span>
-          </Link>
-          <nav className={styles.nav}>
-            <Link href="/menu">Menu</Link>
-            <Link href="/about">About</Link>
-            <Link href="/contact">Find Us</Link>
-            <ThemeToggle />
-            <Link href="/#order" className="btn btn-primary">Order by QR</Link>
-          </nav>
-        </div>
-      </header>
-    </>
+    <header className={`${styles.header}${scrolled ? ` ${styles.headerScrolled}` : ''}`}>
+      <Link href="/" className={styles.headerLogo}>
+        <span className={styles.logoIcon}>
+          <UtensilsCrossed size={24} />
+        </span>
+        <span style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700 }}>Chiya &amp; Puff</span>
+      </Link>
+      <nav className={styles.nav}>
+        <Link href="/menu" className={styles.navLink}>Menu</Link>
+        <Link href="/about" className={styles.navLink}>About</Link>
+        <Link href="/contact" className={styles.navLink}>Find Us</Link>
+        <ThemeToggle />
+        <Link href="/admin" className="btn btn-secondary">Admin</Link>
+        <Link href="/waiter" className="btn btn-secondary">Staff</Link>
+      </nav>
+    </header>
   );
 }
