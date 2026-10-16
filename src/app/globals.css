@@ -1,14 +1,15 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,500;1,600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&display=swap');
 
 :root {
-  --primary: #FF5A5F;
-  --primary-hover: #E34A4F;
-  --secondary: #00A699;
-  --background: #F7F7F9;
-  --card-bg: rgba(255, 255, 255, 0.85);
-  --text-main: #222222;
-  --text-muted: #767676;
-  --border-color: rgba(0, 0, 0, 0.08);
+  --primary: #c8102e;
+  --primary-hover: #9e0b24;
+  --primary-dark: #7a081c;
+  --secondary: #211915;
+  --background: #faf7f2;
+  --card-bg: #ffffff;
+  --text-main: #211915;
+  --text-muted: #6f6459;
+  --border-color: #e7ddd0;
 
   /* Aliases used by dashboards / ordering flow (non-breaking fix) */
   --bg: var(--background);
@@ -17,38 +18,29 @@
   --text-primary: var(--text-main);
   --text-secondary: var(--text-muted);
 
-  /* Lavie Garden-inspired garden oasis tokens (additive only) */
-  --leaf: #1a7a4c;
-  --leaf-deep: #0e4d2e;
-  --leaf-soft: rgba(26, 122, 76, 0.1);
-  --gold: #c9a227;
-  --gold-soft: rgba(201, 162, 39, 0.14);
-  --cream: #fff9f0;
-  --bonfire: #ff8a3d;
-  --ink-on-dark: #f7fbff;
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  --display-font: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  
+  --shadow-sm: 0 1px 3px rgba(33, 25, 21, 0.08);
+  --shadow-md: 0 4px 14px rgba(33, 25, 21, 0.1);
+  --shadow-lg: 0 10px 30px rgba(33, 25, 21, 0.14);
 
-  --font-family: 'Outfit', sans-serif;
-  --display-font: 'Playfair Display', Georgia, serif;
-  
-  --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
-  --shadow-md: 0 8px 24px rgba(0,0,0,0.08);
-  --shadow-lg: 0 16px 40px rgba(0,0,0,0.12);
-  
-  --radius-sm: 8px;
-  --radius-md: 16px;
-  --radius-lg: 24px;
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
   --radius-full: 9999px;
-  
-  --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+
+  --transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
 }
 
 [data-theme='dark'],
 .dark {
-  --background: #0B0B0E;
-  --card-bg: rgba(22, 22, 26, 0.7);
-  --text-main: #F7FBFF;
-  --text-muted: #A0AEC0;
-  --border-color: rgba(255, 255, 255, 0.1);
+  --background: #141110;
+  --card-bg: #1e1a17;
+  --text-main: #f5efe6;
+  --text-muted: #b3a696;
+  --border-color: #38302a;
   --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.5);
   --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.6);
 
@@ -58,10 +50,6 @@
   --glass-border: var(--border-color);
   --text-primary: var(--text-main);
   --text-secondary: var(--text-muted);
-
-  --leaf-soft: rgba(46, 204, 113, 0.14);
-  --gold-soft: rgba(201, 162, 39, 0.18);
-  --cream: #14120c;
 }
 
 * {
@@ -83,35 +71,17 @@ body {
   overflow-x: hidden;
 }
 
-/* Base App Layout Background Animation */
+/* Plain paper backdrop */
 body::before {
-  content: '';
-  position: fixed;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle at 50% 50%, rgba(255, 90, 95, 0.04) 0%, transparent 50%),
-              radial-gradient(circle at 80% 20%, rgba(26, 122, 76, 0.07) 0%, transparent 50%),
-              radial-gradient(circle at 15% 85%, rgba(201, 162, 39, 0.06) 0%, transparent 50%);
-  z-index: -1;
-  animation: bg-drift 25s ease-in-out infinite alternate;
-  pointer-events: none;
+  content: none;
 }
 
-@keyframes bg-drift {
-  0% { transform: translate(0, 0); }
-  100% { transform: translate(-5%, -5%); }
-}
-
-/* Glassmorphism Classes */
+/* Solid cards (keeps .glass-panel class name so dashboards keep working) */
 .glass-panel {
   background: var(--card-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-md);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
 }
 
 /* Typography Utility */
@@ -131,48 +101,46 @@ a {
   transition: var(--transition);
 }
 
-/* Premium Buttons */
+/* Solid restaurant buttons */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.75rem 1.75rem;
-  border-radius: var(--radius-full);
-  font-weight: 600;
+  padding: 0.7rem 1.6rem;
+  border-radius: 6px;
+  font-weight: 700;
   font-family: var(--font-family);
   cursor: pointer;
-  transition: var(--transition);
+  transition: background-color 0.15s ease, color 0.15s ease;
   border: none;
   outline: none;
   gap: 0.5rem;
-  font-size: 1rem;
+  font-size: 0.95rem;
+  letter-spacing: 0.01em;
 }
 
 .btn:active {
-  transform: scale(0.96);
+  transform: translateY(1px);
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
-  color: white;
-  box-shadow: 0 4px 14px rgba(255, 90, 95, 0.3);
+  background: var(--primary);
+  color: #fff;
+  box-shadow: none;
 }
 
 .btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(255, 90, 95, 0.4);
+  background: var(--primary-hover);
 }
 
 .btn-secondary {
-  background: var(--card-bg);
+  background: #fff;
   color: var(--text-main);
   border: 1px solid var(--border-color);
-  backdrop-filter: blur(10px);
 }
 
 .btn-secondary:hover {
-  background: var(--background);
-  transform: translateY(-2px);
+  background: #f3ece1;
 }
 
 /* General Layouts */
@@ -206,93 +174,30 @@ a {
   }
 }
 
-/* Animations */
+/* Subtle entrance */
 .hover-lift {
-  transition: var(--transition);
+  transition: box-shadow 0.15s ease;
 }
 
 .hover-lift:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-md);
 }
 
-/* ---- Garden hospitality layer (additive, safe for management UIs) ---- */
+/* ---- Base polish ---- */
 
 ::selection {
-  background: rgba(26, 122, 76, 0.22);
+  background: rgba(200, 16, 46, 0.16);
 }
 
 :focus-visible {
-  outline: 2px solid var(--leaf);
+  outline: 2px solid var(--primary);
   outline-offset: 2px;
-  border-radius: 6px;
+  border-radius: 4px;
 }
 
 .display-serif {
   font-family: var(--display-font);
-  letter-spacing: -0.01em;
-}
-
-.eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--leaf-deep);
-  background: var(--leaf-soft);
-  border: 1px solid rgba(26, 122, 76, 0.22);
-  padding: 0.4rem 0.85rem;
-  border-radius: 999px;
-}
-
-[data-theme='dark'] .eyebrow,
-.dark .eyebrow {
-  color: #7be0a8;
-}
-
-.btn-garden {
-  background: linear-gradient(135deg, var(--leaf) 0%, var(--leaf-deep) 100%);
-  color: #fff;
-  box-shadow: 0 4px 14px rgba(26, 122, 76, 0.32);
-}
-
-.btn-garden:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 22px rgba(26, 122, 76, 0.38);
-}
-
-.btn-gold {
-  background: linear-gradient(135deg, #d9b545, var(--gold));
-  color: #221a05;
-  box-shadow: 0 4px 14px rgba(201, 162, 39, 0.32);
-}
-
-.btn-gold:hover {
-  transform: translateY(-2px);
-}
-
-.chip-soft {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: 0.78rem;
-  font-weight: 600;
-  padding: 0.3rem 0.7rem;
-  border-radius: 999px;
-  border: 1px solid var(--border-color);
-  background: var(--card-bg);
-  color: var(--text-main);
-}
-
-.garden-divider {
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(26, 122, 76, 0.35), rgba(201, 162, 39, 0.35), transparent);
-  border: 0;
-  margin: 0 auto;
-  max-width: 720px;
+  letter-spacing: 0;
 }
 
 /* Smoother inputs inside management + ordering flows */
@@ -305,7 +210,6 @@ input::placeholder {
   opacity: 0.8;
 }
 
-/* Thin elegant scrollbars */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -314,15 +218,10 @@ input::placeholder {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(120, 120, 120, 0.28);
-  border-radius: 999px;
+  background: #c9bfae;
+  border-radius: 8px;
   border: 2px solid transparent;
   background-clip: content-box;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(26, 122, 76, 0.45);
-  background-clip: content-box;
-  border: 2px solid transparent;
 }
 
 @media (prefers-reduced-motion: reduce) {

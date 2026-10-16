@@ -16,7 +16,5 @@ export default async function Home() {
     console.error('Failed to load menu items on Home page:', error);
   }
 
-  const categories = Array.from(new Set(menuItems.map((m) => m.category)));
-
-  return <HomeClientContent categories={categories} dishes={menuItems} />;
+  return <HomeClientContent dishes={menuItems} />;
 }
