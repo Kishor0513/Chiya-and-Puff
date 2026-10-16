@@ -1,6 +1,7 @@
 'use client';
 
 import {
+	ChartColumn,
 	LayoutDashboard,
 	LogOut,
 	Menu,
@@ -29,6 +30,7 @@ export default function AdminLayout({
 			icon: <UtensilsCrossed size={20} />,
 		},
 		{ name: 'Tables & QR', path: '/admin/tables', icon: <Table2 size={20} /> },
+		{ name: 'Analytics', path: '/admin/analytics', icon: <ChartColumn size={20} /> },
 		{
 			name: 'Staff Management',
 			path: '/admin/staff',

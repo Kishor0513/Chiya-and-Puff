@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import { Analytics } from '@vercel/analytics/next';
 import './globals.css';
 
 import { ThemeProvider } from '@/components/ThemeProvider';
@@ -13,7 +14,7 @@ export const viewport: Viewport = {
 	width: 'device-width',
 	initialScale: 1,
 	maximumScale: 1,
-	themeColor: '#FF5A5F',
+	themeColor: '#c8102e',
 };
 
 export default function RootLayout({
@@ -35,6 +36,7 @@ export default function RootLayout({
 				>
 					{children}
 				</ThemeProvider>
+				<Analytics />
 			</body>
 		</html>
 	);
